@@ -1,0 +1,22 @@
+### IDE
+.vscode/
+.idea/
+.vs/
+
+.env
+.env.*
+
+### .NET
+bin/
+obj/
+appsettings.*.json
+
+
+### React / Vite
+node_modules/
+dist/
+build/
+
+
+### Vite cache
+.vite/
