@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Application.Features.Auth
 {
-    public record RegisterCommand(string Email, string Password, string ComfirmPassword) : IRequest<RegisterResultDto>;
+    public record RegisterCommand(string UserName, string Email, string Phone ,string Password, string ComfirmPassword) : IRequest<RegisterResultDto>;
     public class RegisterHandler : IRequestHandler<RegisterCommand, RegisterResultDto>
     {
         private readonly IAuthService _authService;
@@ -19,7 +19,7 @@ namespace Application.Features.Auth
         }
         public async Task<RegisterResultDto> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
-            return await _authService.RegisterAsync(request.Email, request.Password, request.ComfirmPassword);
+            return await _authService.RegisterAsync(request.UserName, request.Email, request.Phone, request.Password, request.ComfirmPassword);
         }
     }
 }

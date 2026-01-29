@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Auth
 {
-    public record LoginRequestDto(string Email, string Password);
+    public record LoginRequestDto(string Email, string Password, bool IsRemember);
 }

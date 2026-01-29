@@ -8,7 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Interface;
 using Domain.Identity;
+using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -17,9 +19,11 @@ namespace Infrastructure.Service
     public class JwtTokenService : IJwtTokenService
     {
         IConfiguration _configuration;
-        public JwtTokenService(IConfiguration configuration)
+        private readonly AppDbContext _context;
+        public JwtTokenService(IConfiguration configuration, AppDbContext context)
         {
             _configuration = configuration;
+            _context = context;
         }
 
         public string? CreateAccessToken(ApplicationUser user, IList<string> roles)
@@ -53,6 +57,16 @@ namespace Infrastructure.Service
         {
             var randomBytes = RandomNumberGenerator.GetBytes(64);
             return Convert.ToBase64String(randomBytes);
+        }
+
+        public async Task RevokeRefreshTokenAsync(string refreshToken)
+        {
+            var revokeRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(r=> r.Token.Equals(refreshToken));
+            if (revokeRefreshToken != null)
+            {
+                revokeRefreshToken.IsRevoked = true;
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

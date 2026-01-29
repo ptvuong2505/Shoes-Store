@@ -19,6 +19,7 @@ namespace Infrastructure.Persistence
 
         // Domain entities DbSets
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -34,9 +35,89 @@ namespace Infrastructure.Persistence
             builder.Entity<IdentityUserToken<Guid>>().ToTable("UserTokens");
 
             // Config Entites
+
+            // Address
+            builder.Entity<Address>(e =>
+            {
+                e.HasOne(x => x.User)
+                 .WithMany(u => u.Addresses)
+                 .HasForeignKey(x => x.UserId);
+            });
+
+            // ProductInventory (PK kép)
+            builder.Entity<ProductInventory>(e =>
+            {
+                e.HasKey(x => new { x.ProductId, x.SizeId });
+
+                e.HasOne(x => x.Product)
+                 .WithMany(p => p.Inventories)
+                 .HasForeignKey(x => x.ProductId);
+
+                e.HasOne(x => x.Size)
+                 .WithMany(s => s.Inventories)
+                 .HasForeignKey(x => x.SizeId);
+            });
+
+            // CartItem
+            builder.Entity<CartItem>(e =>
+            {
+                e.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId);
+
+                e.HasOne(x => x.Product)
+                .WithMany()
+                .HasForeignKey(x => x.ProductId);
+
+                e.HasOne(x => x.Size)
+                .WithMany()
+                .HasForeignKey(x => x.SizeId);
+            });
+
+            // Order
+            builder.Entity<Order>(e =>
+            {
+                e.HasOne(x => x.User)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(x => x.UserId);
+
+                e.HasOne(x => x.Address)
+                .WithMany()
+                .HasForeignKey(x => x.AddressId);
+            });
+
+            // OrderItem
+            builder.Entity<OrderItem>(e =>
+            {
+                e.HasOne(x => x.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(x => x.OrderId);
+            });
+
+            // Payment (1–1)
+            builder.Entity<Payment>(e =>
+            {
+                e.HasOne(x => x.Order)
+                 .WithOne(o => o.Payment)
+                 .HasForeignKey<Payment>(x => x.OrderId);
+            });
+
+            // Review
+            builder.Entity<Review>(e =>
+            {
+                e.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId);
+
+                e.HasOne(x => x.Product)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(x => x.ProductId);
+            });
+
+
             builder.Entity<RefreshToken>(e =>
             {
-                e.ToTable("RefreshToken");
+                e.ToTable("RefreshTokens");
                 
                 e.HasKey(x => x.Id);
                 
@@ -47,6 +128,22 @@ namespace Infrastructure.Persistence
                 e.HasOne(x=>x.User).WithMany().HasForeignKey(x=> x.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
+            builder.Entity<PasswordResetOtp>(e =>
+            {
+                e.ToTable("PasswordResetOtps");
+
+                e.HasKey(x => x.Id);
+
+                e.HasOne(x=>x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+
+                e.Property(x => x.OtpHash).IsRequired().HasMaxLength(64);
+
+                e.Property(x => x.ExpiresAt).IsRequired();
+
+                e.Property(x => x.IsUsed).HasDefaultValue(false);
+
+                e.HasIndex(x => new { x.UserId, x.OtpHash });
+            });
         }
     }
 }

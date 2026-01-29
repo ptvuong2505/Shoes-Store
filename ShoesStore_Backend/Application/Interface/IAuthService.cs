@@ -9,7 +9,9 @@ namespace Application.Interface
 {
     public interface IAuthService
     {
-        Task<LoginResultDto> LoginAsync(string email, string password);
-        Task<RegisterResultDto> RegisterAsync(string email, string password, string confirmPassword);
+        Task<LoginResultDto> LoginAsync(string email, string password, bool isRemember);
+        Task<RegisterResultDto> RegisterAsync(string userName, string email, string phone, string password, string confirmPassword);
+        Task<SendOtpResultDto> SendOtpAsync(string email);
+        Task VerifyOtpAsync(string email, string otp);
     }
 }

@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Auth
 {
-    public record RegisterResultDto(Guid UserId, string UserName, string Email);
+    public record SendOtpResultDto(string Otp, string Email, string UserName);
 }
