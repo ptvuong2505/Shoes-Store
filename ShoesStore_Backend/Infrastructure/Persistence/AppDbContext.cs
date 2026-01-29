@@ -39,6 +39,8 @@ namespace Infrastructure.Persistence
             // Address
             builder.Entity<Address>(e =>
             {
+                e.ToTable("Addresses");
+
                 e.HasOne(x => x.User)
                  .WithMany(u => u.Addresses)
                  .HasForeignKey(x => x.UserId);
@@ -47,6 +49,8 @@ namespace Infrastructure.Persistence
             // ProductInventory (PK kép)
             builder.Entity<ProductInventory>(e =>
             {
+                e.ToTable("ProductInventories");
+
                 e.HasKey(x => new { x.ProductId, x.SizeId });
 
                 e.HasOne(x => x.Product)
@@ -61,6 +65,8 @@ namespace Infrastructure.Persistence
             // CartItem
             builder.Entity<CartItem>(e =>
             {
+                e.ToTable("CartItems");
+
                 e.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId);
@@ -77,6 +83,8 @@ namespace Infrastructure.Persistence
             // Order
             builder.Entity<Order>(e =>
             {
+                e.ToTable("Orders");
+
                 e.HasOne(x => x.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(x => x.UserId);
@@ -89,6 +97,8 @@ namespace Infrastructure.Persistence
             // OrderItem
             builder.Entity<OrderItem>(e =>
             {
+                e.ToTable("OrderItems");
+
                 e.HasOne(x => x.Order)
                 .WithMany(o => o.Items)
                 .HasForeignKey(x => x.OrderId);
@@ -97,6 +107,8 @@ namespace Infrastructure.Persistence
             // Payment (1–1)
             builder.Entity<Payment>(e =>
             {
+                e.ToTable("Payments");
+
                 e.HasOne(x => x.Order)
                  .WithOne(o => o.Payment)
                  .HasForeignKey<Payment>(x => x.OrderId);
@@ -105,6 +117,8 @@ namespace Infrastructure.Persistence
             // Review
             builder.Entity<Review>(e =>
             {
+                e.ToTable("Reviews");
+
                 e.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId);
