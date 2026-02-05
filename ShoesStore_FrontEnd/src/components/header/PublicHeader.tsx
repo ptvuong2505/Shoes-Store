@@ -1,7 +1,5 @@
 import { NavLink } from "react-router-dom";
 import logo from "../../assets/logo.webp";
-import { IoMdCart } from "react-icons/io";
-import { IoMdNotifications } from "react-icons/io";
 import { Input } from "../ui/input";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { useAuthStore } from "@/stores/auth/auth.store";
@@ -12,7 +10,7 @@ type Props = {
   onOpenMenu: () => void;
 };
 
-function Header({ onOpenMenu }: Props) {
+function PublicHeader({ onOpenMenu }: Props) {
   const { isAuthenticated, user } = useAuthStore();
   const { logout } = useAuth();
   const Menu = [
@@ -55,12 +53,12 @@ function Header({ onOpenMenu }: Props) {
             })}
           </nav>
           <nav className="flex justify-between items-center gap-4">
-            <NavLink className="bg-background p-2 rounded" to="/notifications">
-              <IoMdNotifications />
-            </NavLink>
-            <NavLink className="bg-background p-2 rounded" to="/cart">
-              <IoMdCart />
-            </NavLink>
+            <button className="flex items-center justify-center p-2 text-[#9a5f4c] dark:text-[#b08e84] hover:text-primary transition-colors">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+            <button className="flex items-center justify-center p-2 text-[#9a5f4c] dark:text-[#b08e84] hover:text-primary transition-colors">
+              <span className="material-symbols-outlined">shopping_cart</span>
+            </button>
             <>
               {!isAuthenticated ? (
                 <>
@@ -80,7 +78,7 @@ function Header({ onOpenMenu }: Props) {
               ) : (
                 <>
                   <DropdownMenuAvatar
-                    urlAvatar={user?.urlAvatar}
+                    urlAvatar={user?.avatarUrl}
                     logOut={logout}
                   />
                 </>
@@ -99,4 +97,4 @@ function Header({ onOpenMenu }: Props) {
   );
 }
 
-export default Header;
+export default PublicHeader;

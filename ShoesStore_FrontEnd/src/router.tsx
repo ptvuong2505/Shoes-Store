@@ -9,6 +9,12 @@ import { OtpVerification } from "./pages/auth/OtpVerification";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import AppLayout from "./layouts/AppLayout";
 import AuthLayout from "./layouts/AuthLayout";
+import Profile from "./pages/account/Profile";
+import AccountLayout from "./layouts/AccountLayout";
+import OrderHistory from "./pages/account/OrderHistory";
+import Addresses from "./pages/account/Addresses";
+import PaymentMethod from "./pages/account/PaymentMethod";
+import Security from "./pages/account/Security";
 
 export const router = createBrowserRouter([
   {
@@ -29,6 +35,17 @@ export const router = createBrowserRouter([
       { path: "forgot-password", element: <ForgotPassword /> },
       { path: "otp-verification", element: <OtpVerification /> },
       { path: "reset-password", element: <ResetPassword /> },
+    ],
+  },
+  {
+    path: "/account",
+    element: <AccountLayout />,
+    children: [
+      { index: true, element: <Profile /> },
+      { path: "order-history", element: <OrderHistory /> },
+      { path: "addresses", element: <Addresses /> },
+      { path: "payment-methods", element: <PaymentMethod /> },
+      { path: "security", element: <Security /> },
     ],
   },
 ]);

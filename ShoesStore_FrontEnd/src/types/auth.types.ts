@@ -12,7 +12,8 @@ export interface LoginResponse {
 export interface User {
   id: string;
   userName: string;
-  urlAvatar?: string;
+  phone: string;
+  avatarUrl?: string;
   email: string;
   roles: string[];
 }

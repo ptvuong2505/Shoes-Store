@@ -42,6 +42,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-background-light: #f8f6f6;
+  --color-background-dark: #1b110d;
 }
 
 :root {
@@ -80,7 +83,7 @@
 }
 
 .dark {
-  --background: #221510;
+  --background: #1b110d;
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.208 0.042 265.755);
   --card-foreground: oklch(0.984 0.003 247.858);

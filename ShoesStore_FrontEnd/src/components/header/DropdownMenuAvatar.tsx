@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { BadgeCheckIcon, CreditCardIcon, LogOutIcon } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 interface DropdownMenuAvatarProps {
   urlAvatar?: string;
@@ -34,10 +35,12 @@ export function DropdownMenuAvatar({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <BadgeCheckIcon />
-            Account
-          </DropdownMenuItem>
+          <NavLink to="/account">
+            <DropdownMenuItem>
+              <BadgeCheckIcon />
+              Account
+            </DropdownMenuItem>
+          </NavLink>
           <DropdownMenuItem>
             <CreditCardIcon />
             Billing

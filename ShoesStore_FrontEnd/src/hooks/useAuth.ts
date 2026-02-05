@@ -96,12 +96,6 @@ export default function useAuth() {
     }
   };
 
-  const resetPassword = async (
-    email: string,
-    newPassword: string,
-    confirmNewPassword: string,
-  ) => {};
-
   return {
     login,
     logout,

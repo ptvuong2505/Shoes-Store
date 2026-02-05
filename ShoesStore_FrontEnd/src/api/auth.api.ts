@@ -6,13 +6,13 @@ import type {
 import axiosClient from "./axiosClient";
 
 export const authApi = {
-  login: (data: LoginPayload): Promise<LoginResponse> =>
+  login: async (data: LoginPayload): Promise<LoginResponse> =>
     axiosClient.post("/auth/login", data),
-  logout: (): Promise<void> => axiosClient.post("/auth/logout"),
-  register: (data: RegisterPayload): Promise<void> =>
+  logout: async () => axiosClient.post("/auth/logout"),
+  register: async (data: RegisterPayload) =>
     axiosClient.post("/auth/register", data),
-  sendOtp: (email: string): Promise<void> =>
+  sendOtp: async (email: string) =>
     axiosClient.post("/auth/forgot-password", { email }),
-  verifyOtp: (email: string, otp: string): Promise<void> =>
+  verifyOtp: async (email: string, otp: string) =>
     axiosClient.post("/auth/verify-otp", { email, otp }),
 };

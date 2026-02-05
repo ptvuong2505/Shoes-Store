@@ -106,8 +106,10 @@ namespace Infrastructure.Service
                 {
                     Id = user.Id,
                     UserName = user.UserName!,
+                    Phone = user.PhoneNumber!,
                     Email = user.Email!,
-                    Roles = roles.ToList()
+                    Roles = roles.ToList(),
+                    AvatarUrl = user.AvatarUrl
                 }
             );
         }

@@ -38,6 +38,7 @@ namespace API.Controllers
             try
             {
                 var result = await _mediator.Send(new LoginCommand(loginRequestDto.Email, loginRequestDto.Password, loginRequestDto.IsRemember));
+                Console.WriteLine($"Login successful. {result.RefreshToken}");
                 Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
                 {
                     HttpOnly = true,

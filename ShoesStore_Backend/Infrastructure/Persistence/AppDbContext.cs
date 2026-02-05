@@ -20,6 +20,18 @@ namespace Infrastructure.Persistence
         // Domain entities DbSets
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
+        public DbSet<Address> Addresses => Set<Address>();
+        public DbSet<ProductInventory> ProductInventories => Set<ProductInventory>();
+        public DbSet<CartItem> CartItems => Set<CartItem>();
+        public DbSet<Order> Orders => Set<Order>();
+        public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+        public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<Review> Reviews => Set<Review>();
+        public DbSet<Brand> Brands => Set<Brand>();
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<Size> Sizes => Set<Size>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -49,8 +61,6 @@ namespace Infrastructure.Persistence
             // ProductInventory (PK kép)
             builder.Entity<ProductInventory>(e =>
             {
-                e.ToTable("ProductInventories");
-
                 e.HasKey(x => new { x.ProductId, x.SizeId });
 
                 e.HasOne(x => x.Product)
@@ -65,8 +75,6 @@ namespace Infrastructure.Persistence
             // CartItem
             builder.Entity<CartItem>(e =>
             {
-                e.ToTable("CartItems");
-
                 e.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId);
@@ -83,8 +91,6 @@ namespace Infrastructure.Persistence
             // Order
             builder.Entity<Order>(e =>
             {
-                e.ToTable("Orders");
-
                 e.HasOne(x => x.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(x => x.UserId);
@@ -97,8 +103,6 @@ namespace Infrastructure.Persistence
             // OrderItem
             builder.Entity<OrderItem>(e =>
             {
-                e.ToTable("OrderItems");
-
                 e.HasOne(x => x.Order)
                 .WithMany(o => o.Items)
                 .HasForeignKey(x => x.OrderId);
@@ -107,8 +111,6 @@ namespace Infrastructure.Persistence
             // Payment (1–1)
             builder.Entity<Payment>(e =>
             {
-                e.ToTable("Payments");
-
                 e.HasOne(x => x.Order)
                  .WithOne(o => o.Payment)
                  .HasForeignKey<Payment>(x => x.OrderId);
@@ -117,8 +119,6 @@ namespace Infrastructure.Persistence
             // Review
             builder.Entity<Review>(e =>
             {
-                e.ToTable("Reviews");
-
                 e.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId);
@@ -130,9 +130,7 @@ namespace Infrastructure.Persistence
 
 
             builder.Entity<RefreshToken>(e =>
-            {
-                e.ToTable("RefreshTokens");
-                
+            {            
                 e.HasKey(x => x.Id);
                 
                 e.Property(x=>x.Token).IsRequired().HasMaxLength(500);
@@ -144,8 +142,6 @@ namespace Infrastructure.Persistence
 
             builder.Entity<PasswordResetOtp>(e =>
             {
-                e.ToTable("PasswordResetOtps");
-
                 e.HasKey(x => x.Id);
 
                 e.HasOne(x=>x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
