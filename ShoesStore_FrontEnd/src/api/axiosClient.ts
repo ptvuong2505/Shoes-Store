@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/stores/auth/auth.store";
 import axios from "axios";
 
 const axiosClient = axios.create({
@@ -36,7 +37,9 @@ axiosClient.interceptors.response.use(
         return axiosClient(originalRequest);
       } catch (refreshError) {
         localStorage.removeItem("accessToken");
-        window.location.href = "/auth/login";
+        useAuthStore.getState().logout();
+        window.location.href = "/";
+
         return Promise.reject(refreshError);
       }
     }

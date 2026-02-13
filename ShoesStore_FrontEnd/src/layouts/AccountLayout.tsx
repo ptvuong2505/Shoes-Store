@@ -1,14 +1,16 @@
 import UserHeader from "@/components/header/UserHeader";
-import { useEffect } from "react";
+import useAuth from "@/hooks/useAuth";
 import { NavLink, Outlet } from "react-router-dom";
 
 const AccountLayout = () => {
-  useEffect(() => {}, []);
-
+  const { logout } = useAuth();
   const activeStyle = ({ isActive }: { isActive: boolean }) => {
     return isActive
       ? "flex items-center gap-3 px-6 py-4 text-sm transition-all bg-primary/10 text-primary border-r-4 border-primary font-bold"
       : "flex items-center gap-3 px-6 py-4 text-sm transition-all";
+  };
+  const handleLogout = () => {
+    logout();
   };
   return (
     <>
@@ -71,7 +73,10 @@ const AccountLayout = () => {
                 </li>
               </ul>
               <div className="p-6 mt-4 border-t border-[#e7d5cf] dark:border-[#3d2a23]">
-                <button className="flex items-center gap-3 text-sm text-red-500 font-semibold hover:opacity-80 transition-opacity">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 text-sm text-red-500 font-semibold hover:opacity-80 transition-opacity"
+                >
                   <span className="material-symbols-outlined text-xl">
                     logout
                   </span>

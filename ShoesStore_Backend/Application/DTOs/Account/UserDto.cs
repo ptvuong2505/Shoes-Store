@@ -14,5 +14,6 @@ namespace Application.DTOs.Account
         public string? Phone { get; set; } = null!;
         public List<string>? Roles { get; set; }
         public string? AvatarUrl { get; set; }
+        public DateTimeOffset BirthDate { get; set; }
     }
 }

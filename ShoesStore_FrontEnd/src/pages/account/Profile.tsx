@@ -1,16 +1,17 @@
 import { accountApi } from "@/api/account.api";
 import { useAuthStore } from "@/stores/auth/auth.store";
+import type { UpdateProfilePayload } from "@/types/account.types";
 import type { User } from "@/types/auth.types";
 import { useEffect, useRef, useState } from "react";
 
 const Profile = () => {
+  const [loading, setLoading] = useState(false);
   const setAuthUser = useAuthStore((s) => s.setUser);
   const [user, setUser] = useState<User | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(
     user?.avatarUrl,
   );
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const { getProfile, upLoadAvatar } = accountApi;
 
   useEffect(() => {
@@ -36,8 +37,6 @@ const Profile = () => {
       return;
     }
 
-    setAvatarFile(file);
-
     try {
       const avatarUrl = await upLoadAvatar(file);
 
@@ -47,25 +46,33 @@ const Profile = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (avatarFile) {
-      const formData = new FormData();
-      formData.append("file", avatarFile);
+    if (!user) return;
 
-      // const res = await axios.post("/api/users/avatar", formData, {
-      //   headers: { "Content-Type": "multipart/form-data" },
-      // });
+    const payload: UpdateProfilePayload = {
+      userName: user.userName,
+      phone: user.phone,
+      birthDate: user.birthDate,
+    };
 
-      // update user global / context
-      // setUser((prev: any) => ({
-      //   ...prev,
-      //   avatarUrl: avatarPreview,
-      // }));
+    try {
+      setLoading(true);
+      const updatedUser = await accountApi.updateProfile(payload);
+      // cập nhật state trang
+      setUser(updatedUser);
+
+      // cập nhật zustand + localStorage
+      setAuthUser(updatedUser);
+
+      // toast.success("Profile updated successfully 🎉");
+    } catch (error: any) {
+      console.error(error);
+      // toast.error(error?.response?.data?.message || "Update profile failed");
+    } finally {
+      setLoading(false);
     }
-
-    alert("Profile updated");
   };
 
   return (
@@ -79,7 +86,7 @@ const Profile = () => {
         </p>
       </div>
       <div className="bg-white dark:bg-[#2c1d18] rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23] shadow-sm overflow-hidden">
-        <form className="p-8 space-y-8">
+        <form className="p-8 space-y-8" onSubmit={handleSubmit}>
           <div className="flex items-center gap-8 pb-8 border-b border-[#e7d5cf] dark:border-[#3d2a23]">
             <div className="relative group">
               <div className="size-24 rounded-full overflow-hidden border-4 border-white dark:border-[#3d2a23] shadow-lg">
@@ -88,6 +95,7 @@ const Profile = () => {
                   className="w-full h-full object-cover"
                   src={
                     user?.avatarUrl ||
+                    avatarPreview ||
                     "https://lh3.googleusercontent.com/aida-public/AB6AXuAJJxi1c0TcmIzQtI9_iCAlFrUWKjfJDfG7pEhbtFpyQryl91Ht3ahxtM2yFPtwELsVgR9VWDvdc4t7aGJqa03CegzR0Ei7cqEH6ZISzlo5JkiRouIgmGF1GAcxq4MwRnyE4ZnwL6neg3pCzwf--SJHdvWHVoLdIhroDHxrRbw9mhPFTQg1MyXTHsVsN0x02U7QgnMkojEkIB9zm9OMFe2RfkdhAoUeq6PU0csq-TyJ2YVjbAxWovSsHa-vmUcWnndez_N58U-ULYs"
                   }
                 />
@@ -110,17 +118,6 @@ const Profile = () => {
                 >
                   Upload New
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAvatarPreview(undefined);
-                    setAvatarFile(null);
-                  }}
-                  className="px-4 py-2 text-xs font-bold bg-[#fcf9f8] dark:bg-background-dark border border-[#e7d5cf] dark:border-[#3d2a23] rounded-lg"
-                >
-                  Remove
-                </button>
               </div>
             </div>
           </div>
@@ -130,7 +127,17 @@ const Profile = () => {
               <input
                 className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
                 type="text"
-                value={user?.userName}
+                value={user?.userName ?? ""}
+                onChange={(e) => {
+                  setUser((prevuser) => {
+                    if (!prevuser) return prevuser; // hoặc return null
+
+                    return {
+                      ...prevuser,
+                      userName: e.target.value,
+                    };
+                  });
+                }}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -138,19 +145,36 @@ const Profile = () => {
               <input
                 className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
                 type="email"
-                value={user?.email}
+                value={user?.email ?? ""}
+                onChange={(e) => {
+                  setUser((prevuser) => {
+                    if (!prevuser) return prevuser; // hoặc return null
+
+                    return {
+                      ...prevuser,
+                      email: e.target.value,
+                    };
+                  });
+                }}
               />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold">Phone Number</label>
               <div className="flex">
-                <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-[#e7d5cf] dark:border-[#3d2a23] bg-[#e7d5cf]/20 dark:bg-background-dark text-[#9a5f4c] text-sm font-medium">
-                  +1
-                </span>
                 <input
-                  className="form-input w-full rounded-r-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
+                  className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
                   type="tel"
-                  value={user?.phoneNumber}
+                  value={user?.phone ?? ""}
+                  onChange={(e) => {
+                    setUser((prevuser) => {
+                      if (!prevuser) return prevuser; // hoặc return null
+
+                      return {
+                        ...prevuser,
+                        phone: e.target.value,
+                      };
+                    });
+                  }}
                 />
               </div>
             </div>
@@ -159,31 +183,29 @@ const Profile = () => {
               <input
                 className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
                 type="date"
-                defaultValue="1992-08-15"
+                value={user?.birthDate?.slice(0, 10) ?? ""}
+                onChange={(e) => {
+                  setUser((prevuser) => {
+                    if (!prevuser) return prevuser; // hoặc return null
+                    return {
+                      ...prevuser,
+                      birthDate: e.target.value,
+                    };
+                  });
+                }}
               />
             </div>
           </div>
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-[#e7d5cf] dark:border-[#3d2a23]">
             <button
-              className="px-8 py-3 bg-primary text-white text-sm font-bold rounded-lg shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
+              className={`${loading ? "opacity-50 cursor-not-allowed" : ""} px-8 py-3 bg-primary text-white text-sm font-bold rounded-lg shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all`}
               type="submit"
+              disabled={loading}
             >
               Save Profile
             </button>
           </div>
         </form>
-      </div>
-      <div className="bg-primary/5 rounded-xl border border-primary/20 p-6 flex gap-4">
-        <span className="material-symbols-outlined text-primary text-2xl">
-          shield
-        </span>
-        <div>
-          <h4 className="font-bold text-sm mb-1">Your data is safe</h4>
-          <p className="text-sm text-[#9a5f4c] dark:text-[#b08e84]">
-            We use industry-standard encryption to protect your personal
-            details. Only you can view or modify this information.
-          </p>
-        </div>
       </div>
     </div>
   );

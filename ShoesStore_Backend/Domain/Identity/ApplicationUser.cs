@@ -9,5 +9,6 @@ namespace Domain.Identity
         public ICollection<Address> Addresses { get; set; }
         public ICollection<Order> Orders { get; set; }
         public string? AvatarUrl { get; set; }
+        public DateTimeOffset BirthDate { get; set; }
     }
 }

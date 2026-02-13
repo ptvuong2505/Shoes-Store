@@ -5,18 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Entities
+namespace Application.DTOs.Address
 {
-    public class Address
+    public class AddressDto
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public string ReceiverName { get; set; }
         public string Phone { get; set; }
         public string City { get; set; }
-        public bool IsPrimary {  get; set; }
+        public bool IsPrimary { get; set; }
         public string AddressLine { get; set; }
-        public ApplicationUser User { get; set; }
     }
-
 }

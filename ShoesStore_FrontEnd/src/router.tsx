@@ -15,6 +15,7 @@ import OrderHistory from "./pages/account/OrderHistory";
 import Addresses from "./pages/account/Addresses";
 import PaymentMethod from "./pages/account/PaymentMethod";
 import Security from "./pages/account/Security";
+import OrderDetail from "./pages/order/OrderDetail";
 
 export const router = createBrowserRouter([
   {
@@ -47,5 +48,9 @@ export const router = createBrowserRouter([
       { path: "payment-methods", element: <PaymentMethod /> },
       { path: "security", element: <Security /> },
     ],
+  },
+  {
+    path: "/orders/:id",
+    element: <OrderDetail />,
   },
 ]);

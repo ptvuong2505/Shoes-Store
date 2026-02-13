@@ -16,6 +16,7 @@ export interface User {
   avatarUrl?: string;
   email: string;
   roles: string[];
+  birthDate?: string;
 }
 
 export interface AuthState {
