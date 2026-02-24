@@ -4,7 +4,7 @@ import type { OrderDetail, OrderItem } from "@/types/order.types";
 import { useEffect, useState } from "react";
 import { NavLink, useParams } from "react-router-dom";
 
-const OrderDetail = () => {
+const DetailOrder = () => {
   const { id } = useParams();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -193,4 +193,4 @@ const OrderDetail = () => {
   );
 };
 
-export default OrderDetail;
+export default DetailOrder;

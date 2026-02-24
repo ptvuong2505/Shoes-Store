@@ -1,7 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import Register from "./pages/auth/Register";
-import Women from "./pages/products/Women";
-import Men from "./pages/products/Men";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -15,7 +13,10 @@ import OrderHistory from "./pages/account/OrderHistory";
 import Addresses from "./pages/account/Addresses";
 import PaymentMethod from "./pages/account/PaymentMethod";
 import Security from "./pages/account/Security";
-import OrderDetail from "./pages/order/OrderDetail";
+import Find from "./pages/Find";
+import Brand from "./pages/Brand";
+import Chat from "./pages/Chat";
+import DetailOrder from "./pages/order/DetailOrder";
 
 export const router = createBrowserRouter([
   {
@@ -23,8 +24,9 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: "men", element: <Men /> },
-      { path: "women", element: <Women /> },
+      { path: "find", element: <Find /> },
+      { path: "brand", element: <Brand /> },
+      { path: "chat", element: <Chat /> },
     ],
   },
   {
@@ -51,6 +53,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "/orders/:id",
-    element: <OrderDetail />,
+    element: <DetailOrder />,
   },
 ]);

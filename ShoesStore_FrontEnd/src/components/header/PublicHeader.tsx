@@ -15,9 +15,9 @@ function PublicHeader({ onOpenMenu }: Props) {
   const { logout } = useAuth();
   const Menu = [
     { label: "Home", path: "/" },
-    { label: "Men", path: "/men" },
-    { label: "Women", path: "/women" },
-    { label: "Sale", path: "/sale" },
+    { label: "Find", path: "/find" },
+    { label: "Brand", path: "/brand" },
+    { label: "Chat", path: "/chat" },
   ];
   const activeStyle = ({ isActive }: { isActive: boolean }) => {
     return (
