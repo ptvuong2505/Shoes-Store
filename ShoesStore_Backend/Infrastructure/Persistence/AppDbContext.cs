@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,6 +32,7 @@ namespace Infrastructure.Persistence
         public DbSet<Product> Products => Set<Product>();
         public DbSet<Size> Sizes => Set<Size>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+        public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -154,6 +156,13 @@ namespace Infrastructure.Persistence
 
                 e.HasIndex(x => new { x.UserId, x.OtpHash });
             });
+
+            // Product
+            builder.Entity<Product>(e =>
+            {
+                e.HasMany(p => p.Images).WithOne(pi => pi.Product).HasForeignKey(pi => pi.ProductId).OnDelete(DeleteBehavior.Cascade);
+            });
+            
         }
     }
 }

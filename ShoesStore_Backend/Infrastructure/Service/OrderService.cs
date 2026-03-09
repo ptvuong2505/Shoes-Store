@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Order;
 using Application.DTOs.Paging;
 using Application.Interface;
+using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -18,6 +19,51 @@ namespace Infrastructure.Service
         public OrderService(AppDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<string> BuyNowAsync(string userId, BuyNowRequest request)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Id.ToString() == userId);
+            if (user == null)
+                throw new Exception("User not found");
+
+            var product = _context.Products.FirstOrDefault(p => p.Id.ToString() == request.ProductId);
+            if (product == null)
+                throw new Exception("Product not found");
+
+            var productInventory = product.Inventories.FirstOrDefault(i => i.Size.Value == request.Size);
+            if (productInventory == null)
+                throw new Exception("Product size not found");
+
+            var size = _context.Sizes.FirstOrDefault(s => s.Value == request.Size);
+            if (size == null)
+                throw new Exception("Size not found");
+
+            if (productInventory.Quantity < request.Quantity)
+                throw new Exception("Not enough inventory");
+
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                AddressId = user.Addresses.Where(a => a.IsPrimary).FirstOrDefault()?.Id ?? Guid.Empty,
+                CreatedAt = DateTime.UtcNow,
+                Status = "Pending",
+                TotalAmount = product.Price * request.Quantity,
+                Items = new List<OrderItem>
+                {
+                    new OrderItem
+                    {
+                        Id = Guid.NewGuid(),
+                        ProductId = product.Id,
+                        Quantity = request.Quantity,
+                        Size = size
+                    }
+                }
+            };
+            await _context.Orders.AddAsync(order);
+            await _context.SaveChangesAsync();
+            return order.Id.ToString();
         }
 
         public async Task<OrderDetailDto?> GetOrderDetailAsync(string userId, string orderId)

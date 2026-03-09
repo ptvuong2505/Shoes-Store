@@ -12,5 +12,6 @@ namespace Application.Interface
     {
         Task<PagedResult<OrderDto>> GetUserOrdersAsync(string userId, int page, int pageSize);
         Task<OrderDetailDto?> GetOrderDetailAsync(string userId, string orderId);
+        Task<string> BuyNowAsync(string userId, BuyNowRequest request);
     }
 }

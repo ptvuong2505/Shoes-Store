@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Entities
+namespace Application.DTOs.Product
 {
-    public class Product
+    public class ProductDto
     {
         public Guid Id { get; set; }
 
@@ -15,13 +16,9 @@ namespace Domain.Entities
         public decimal Price { get; set; }
         public decimal? DiscountPrice { get; set; }
         public string Description { get; set; }
-
-        public Guid BrandId { get; set; }
-        public Brand Brand { get; set; }
-
-        public ICollection<ProductImage> Images { get; set; }
-        public ICollection<ProductInventory> Inventories { get; set; }
-        public ICollection<Review> Reviews { get; set; }
+        public string Brand { get; set; }
+        public double AverageRating { get; set; }
+        public int totalRatings { get; set; }
+        public string MainImageUrl { get; set; }
     }
-
 }

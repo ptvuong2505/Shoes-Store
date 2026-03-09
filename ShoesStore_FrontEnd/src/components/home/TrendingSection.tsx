@@ -1,6 +1,10 @@
+import { useEffect } from "react";
 import ProductItem from "../product/ProductItem";
 
 const TrendingSection = () => {
+  useEffect(() => {
+    // Fetch trending products from API if needed
+  }, []);
   const trendingProducts = [
     {
       UrlImage:

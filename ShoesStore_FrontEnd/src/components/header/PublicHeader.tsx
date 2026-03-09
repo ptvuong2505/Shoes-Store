@@ -15,7 +15,7 @@ function PublicHeader({ onOpenMenu }: Props) {
   const { logout } = useAuth();
   const Menu = [
     { label: "Home", path: "/" },
-    { label: "Find", path: "/find" },
+    { label: "Find", path: "/products" },
     { label: "Brand", path: "/brand" },
     { label: "Chat", path: "/chat" },
   ];
@@ -27,7 +27,7 @@ function PublicHeader({ onOpenMenu }: Props) {
   };
   return (
     <>
-      <header className="sticky w-full top-0 h-20 flex justify-between items-center bg-background z-50 px-4">
+      <header className="sticky w-full top-0 h-20 flex justify-between items-center bg-background z-50 px-4 border-b-1">
         <div className="h-full flex justify-around items-center w-full lg:w-1/2">
           <NavLink className="h-full flex items-center" to="/">
             <img src={logo} className="h-full" alt="Logo" />

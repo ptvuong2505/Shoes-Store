@@ -13,10 +13,12 @@ import OrderHistory from "./pages/account/OrderHistory";
 import Addresses from "./pages/account/Addresses";
 import PaymentMethod from "./pages/account/PaymentMethod";
 import Security from "./pages/account/Security";
-import Find from "./pages/Find";
 import Brand from "./pages/Brand";
 import Chat from "./pages/Chat";
 import DetailOrder from "./pages/order/DetailOrder";
+import Products from "./pages/Products";
+import ProductDetailPage from "./pages/product/ProductDetailPage";
+import OrderCheckout from "./pages/order/OrderCheckout";
 
 export const router = createBrowserRouter([
   {
@@ -24,9 +26,10 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: "find", element: <Find /> },
+      { path: "products", element: <Products /> },
       { path: "brand", element: <Brand /> },
       { path: "chat", element: <Chat /> },
+      { path: "products/:id", element: <ProductDetailPage /> },
     ],
   },
   {
@@ -52,7 +55,14 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: "/orders/:id",
-    element: <DetailOrder />,
+    path: "/orders",
+    element: <AppLayout />,
+    children: [
+      { path: ":id", element: <DetailOrder /> },
+      {
+        path: "checkout/:id",
+        element: <OrderCheckout />,
+      },
+    ],
   },
 ]);

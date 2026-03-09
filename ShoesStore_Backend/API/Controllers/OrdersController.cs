@@ -1,4 +1,5 @@
-﻿using Application.Interface;
+﻿using Application.DTOs.Order;
+using Application.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,7 @@ namespace API.Controllers
             // Lấy userId từ JWT
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if(userId == null)
+            if (userId == null)
             {
                 return Unauthorized(new { Message = "User ID claim not found." });
             }
@@ -45,7 +46,8 @@ namespace API.Controllers
         public async Task<IActionResult> GetOrderDetail(string id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) { 
+            if (userId == null)
+            {
                 return Unauthorized();
             }
 
@@ -53,9 +55,25 @@ namespace API.Controllers
 
             if (order == null) return NotFound();
 
-            Console.WriteLine($"{"Itemsssssss: " + order.Items.Count()}");
             return Ok(order);
         }
 
+        [Authorize]
+        [HttpPost("buy-now")]
+        public async Task<IActionResult> BuyNow([FromBody] BuyNowRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+            var orderId = await _orderService.BuyNowAsync(userId, request);
+            if (orderId == null)
+            {
+                return BadRequest(new { Message = "Failed to create order." });
+            }
+            return Ok(new { OrderId = orderId });
+
+        }
     }
 }

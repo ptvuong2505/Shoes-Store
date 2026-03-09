@@ -1,6 +1,7 @@
 ﻿using Domain.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Supabase.Gotrue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,6 +51,12 @@ namespace Infrastructure.Identity
                 };
                 var userResult = await userManager.CreateAsync(adminUser, "Admin@12345");
             }
+            //else
+            //{
+            //    var token = await userManager.GeneratePasswordResetTokenAsync(adminUser);
+
+            //    await userManager.ResetPasswordAsync(adminUser, token, "Admin@123456");
+            //}
         }
     }
 }
