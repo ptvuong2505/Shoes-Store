@@ -38,7 +38,7 @@ axiosClient.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem("accessToken");
         useAuthStore.getState().logout();
-        window.location.href = "/";
+        window.location.href = "/auth/login";
 
         return Promise.reject(refreshError);
       }

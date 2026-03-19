@@ -1,4 +1,5 @@
 import type { Product } from "@/types/product.type";
+import { formatVndCurrency } from "@/lib/currency";
 
 interface ProductFindItemProps {
   product: Product;
@@ -13,11 +14,6 @@ export const ProductFindItem = ({ product }: ProductFindItemProps) => {
           data-alt="Red Nike running shoe on neutral background"
           src={product.mainImageUrl}
         />
-        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-linear-to-t from-black/60 to-transparent">
-          <button className="w-full py-2 bg-primary text-white rounded-lg font-bold text-sm">
-            Quick Add
-          </button>
-        </div>
       </div>
       <div className="p-5 flex flex-col gap-1">
         <p className="text-xs font-bold text-primary uppercase tracking-widest">
@@ -29,11 +25,11 @@ export const ProductFindItem = ({ product }: ProductFindItemProps) => {
         <p className="text-[#9a5f4c] text-sm">Road Running Shoes</p>
         <div className="mt-3 flex items-center justify-between">
           <p className="text-xl font-medium text-primary">
-            {product.price.toLocaleString("vi-VN")}₫
+            {formatVndCurrency(product.price)}
           </p>
           {product.discountPrice && (
             <p className="text-sm font-mono text-[#9a5f4c] line-through">
-              {product.discountPrice.toLocaleString("vi-VN")}₫
+              {formatVndCurrency(product.discountPrice)}
             </p>
           )}
           <div className="flex items-center gap-1 text-yellow-500">

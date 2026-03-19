@@ -19,6 +19,7 @@ import DetailOrder from "./pages/order/DetailOrder";
 import Products from "./pages/Products";
 import ProductDetailPage from "./pages/product/ProductDetailPage";
 import OrderCheckout from "./pages/order/OrderCheckout";
+import Cart from "./pages/cart/cart";
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "brand", element: <Brand /> },
       { path: "chat", element: <Chat /> },
       { path: "products/:id", element: <ProductDetailPage /> },
+      { path: "/cart", element: <Cart /> },
     ],
   },
   {

@@ -72,8 +72,71 @@ namespace API.Controllers
             {
                 return BadRequest(new { Message = "Failed to create order." });
             }
-            return Ok(new { OrderId = orderId });
+            return Ok(orderId);
+        }
 
+        [Authorize]
+        [HttpPost("checkout")]
+        public async Task<IActionResult> CheckoutCart([FromBody] List<BuyNowRequest> requests)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                var orderId = await _orderService.CheckoutCartAsync(userId, requests);
+                return Ok(orderId);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [Authorize]
+        [HttpGet("checkout/{orderId}")]
+        public async Task<IActionResult> GetOrderCheckoutInfo(string orderId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+            var checkoutInfo = await _orderService.GetOrderCheckoutInfoAsync(userId, orderId);
+            if (checkoutInfo == null)
+            {
+                return NotFound(new { Message = "Order not found." });
+            }
+            return Ok(checkoutInfo);
+        }
+
+        [Authorize]
+        [HttpPost("payment/{orderId}")]
+        public async Task<IActionResult> ProcessPayment(string orderId, [FromBody] ProcessPaymentRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(request.SelectedAddressId))
+            {
+                return BadRequest(new { Message = "selectedAddressId is required." });
+            }
+
+            try
+            {
+                await _orderService.PaymentAsync(userId, orderId, request.SelectedAddressId);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+            return Ok(new { Message = "Payment processed successfully." });
         }
     }
 }

@@ -100,6 +100,11 @@ namespace Infrastructure.Persistence
                 e.HasOne(x => x.Address)
                 .WithMany()
                 .HasForeignKey(x => x.AddressId);
+
+                e.HasOne(x => x.Payment)
+                .WithOne(e => e.Order)
+                .HasForeignKey<Payment>(x => x.OrderId)
+                .IsRequired(false);
             });
 
             // OrderItem

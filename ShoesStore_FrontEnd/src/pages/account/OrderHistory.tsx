@@ -79,15 +79,28 @@ const OrderHistory = () => {
                     </p>
                   </div>
 
-                  <NavLink
-                    className="px-4 py-2 text-sm font-bold bg-[#fcf9f8] dark:bg-background-dark border border-[#e7d5cf] dark:border-[#3d2a23] rounded-lg hover:border-primary hover:text-primary transition-all flex items-center gap-2"
-                    to={`/orders/${order.id}`}
-                  >
-                    View Details
-                    <span className="material-symbols-outlined text-sm">
-                      arrow_forward
-                    </span>
-                  </NavLink>
+                  <div className="flex gap-2">
+                    {order.status === "Pending" && (
+                      <NavLink
+                        className="px-4 py-2 text-sm font-bold bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2"
+                        to={`/orders/checkout/${order.id}`}
+                      >
+                        Checkout
+                        <span className="material-symbols-outlined text-sm">
+                          shopping_cart_checkout
+                        </span>
+                      </NavLink>
+                    )}
+                    <NavLink
+                      className="px-4 py-2 text-sm font-bold bg-[#fcf9f8] dark:bg-background-dark border border-[#e7d5cf] dark:border-[#3d2a23] rounded-lg hover:border-primary hover:text-primary transition-all flex items-center gap-2"
+                      to={`/orders/${order.id}`}
+                    >
+                      View Details
+                      <span className="material-symbols-outlined text-sm">
+                        arrow_forward
+                      </span>
+                    </NavLink>
+                  </div>
                 </div>
               </div>
             </div>

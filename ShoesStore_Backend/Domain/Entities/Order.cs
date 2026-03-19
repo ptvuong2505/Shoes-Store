@@ -23,7 +23,7 @@ namespace Domain.Entities
         public ApplicationUser User { get; set; }
         public Address Address { get; set; }
         public ICollection<OrderItem> Items { get; set; }
-        public Payment Payment { get; set; }
+        public Payment? Payment { get; set; }
     }
 
 }

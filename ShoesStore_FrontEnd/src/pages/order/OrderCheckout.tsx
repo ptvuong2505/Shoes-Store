@@ -1,260 +1,320 @@
+import { accountApi } from "@/api/account.api";
+import { orderApi } from "@/api/order.api";
+import { formatVndCurrency } from "@/lib/currency";
+import type { Address } from "@/types/address.types";
+import type { OrderCheckout as OrderCheckoutType } from "@/types/order.types";
+import { useEffect, useState } from "react";
+import { replace, useNavigate, useParams } from "react-router-dom";
+
 const OrderCheckout = () => {
+  const { id } = useParams();
+  const navigator = useNavigate();
+  const [order, setOrder] = useState<OrderCheckoutType | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState<Omit<Address, "id">>({
+    receiverName: "",
+    phone: "",
+    addressLine: "",
+    city: "",
+    isPrimary: false,
+  });
+
+  const fetchAddressList = async () => {
+    const data = await accountApi.getAddresses();
+    setAddresses(data);
+    const primary = data.find((a) => a.isPrimary);
+    if (primary) setSelectedAddressId(primary.id);
+    else if (data.length > 0) setSelectedAddressId(data[0].id);
+  };
+
+  useEffect(() => {
+    document.title = "Checkout - ShoesStore";
+
+    const fetchOrderCheckout = async (orderId: string) => {
+      const data = await orderApi.checkoutBuyNow(orderId);
+      setOrder(data);
+    };
+
+    const loadAddresses = async () => {
+      const data = await accountApi.getAddresses();
+      setAddresses(data);
+      const primary = data.find((a) => a.isPrimary);
+      if (primary) setSelectedAddressId(primary.id);
+      else if (data.length > 0) setSelectedAddressId(data[0].id);
+    };
+
+    fetchOrderCheckout(id!);
+    loadAddresses();
+  }, [id]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handlePayment = async () => {
+    if (!selectedAddressId) return;
+    try {
+      await orderApi.payment(id!, selectedAddressId);
+      navigator("/orders/" + id, { replace: true });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await accountApi.create(formData);
+      await fetchAddressList();
+      setShowForm(false);
+      setFormData({
+        receiverName: "",
+        phone: "",
+        addressLine: "",
+        city: "",
+        isPrimary: false,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
-    <main className="flex-1 flex justify-center py-10 px-4 md:px-10 lg:px-20 xl:px-40">
-      <div className="max-w-300 w-full flex flex-col lg:flex-row gap-8">
-        {/* Left Column: Items List */}
-        <div className="flex-1 flex flex-col gap-6">
-          {/* PageHeading */}
-          <div className="flex flex-wrap justify-between items-center gap-3">
-            <h1 className="text-background-dark dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">
-              Shopping Cart (3 items)
-            </h1>
-          </div>
-          <div className="flex flex-col gap-1">
-            {/* ListItem 1 */}
-            <div className="flex flex-col sm:flex-row gap-6 bg-white dark:bg-white/5 p-6 rounded-xl border border-[#f3eae7] dark:border-white/10">
-              <div
-                className="bg-center bg-no-repeat aspect-4/3 bg-cover rounded-lg h-32 w-full sm:w-44 shrink-0"
-                data-alt="Nike Air Max 270 Sunset Orange"
-                style={{
-                  backgroundImage:
-                    'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDK9OfV9TRyev64xDGjAPbqu3Mkt4qzRr62URlQ7evO0gpNNoYQiSypOCIAXVK898v-SUqZ53LypQYAW_2saus2kXH9bKLyXAuy-IC5iGkxZvqR3s3v1miwLeBUTiuqvZCVwu3ii9_7GJH0qWnEZNhhEb__fINOaxai_1eO3LWCUyvjFxy0u7BOBzDABXqPMJzZp56n0KeyjgX3TWStxPA6c8339AgLOAuNaneqokW_vJGHq19BsHd1Chx5rmzl29y1LRlzPKDQoz8")',
-                }}
-              />
-              <div className="flex flex-1 flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[#1b110d] dark:text-white text-lg font-bold leading-normal">
-                      Nike Air Max 270
-                    </p>
-                    <p className="text-[#9a5f4c] dark:text-white/60 text-sm mt-1">
-                      Size: 10.5 US | Color: Sunset Orange
-                    </p>
-                  </div>
-                  <p className="text-[#1b110d] dark:text-white text-lg font-bold">
-                    $150.00
-                  </p>
-                </div>
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1 bg-[#f3eae7] dark:bg-white/10 rounded-lg p-1">
-                      <button className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white dark:hover:bg-white/20 transition-colors">
-                        <span className="material-symbols-outlined text-sm">
-                          remove
-                        </span>
-                      </button>
-                      <input
-                        className="w-8 text-center bg-transparent border-none focus:ring-0 text-sm font-bold"
-                        type="number"
-                        defaultValue={1}
-                      />
-                      <button className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white dark:hover:bg-white/20 transition-colors">
-                        <span className="material-symbols-outlined text-sm">
-                          add
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                  <button className="flex items-center text-[#9a5f4c] dark:text-white/40 hover:text-red-500 transition-colors gap-1.5 text-sm font-bold">
-                    <span className="material-symbols-outlined text-[18px]">
-                      delete
-                    </span>
-                    <span>Remove</span>
-                  </button>
-                </div>
-              </div>
+    <div className="flex-1 px-4 md:px-20 lg:px-40 py-8">
+      <h1 className="text-background-dark dark:text-[#f3eae7] text-3xl font-extrabold mb-8">
+        Shipping Information
+      </h1>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="lg:col-span-7 space-y-8">
+          <section className="bg-white dark:bg-background-dark/50 p-6 rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23]">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">
+                  local_shipping
+                </span>
+                Select Address
+              </h2>
+              <button
+                onClick={() => setShowForm((prev) => !prev)}
+                className="text-primary font-bold text-sm hover:underline flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {showForm ? "close" : "add"}
+                </span>
+                {showForm ? "Cancel" : "Add New Address"}
+              </button>
             </div>
-            {/* ListItem 2 */}
-            <div className="flex flex-col sm:flex-row gap-6 bg-white dark:bg-white/5 p-6 rounded-xl border border-[#f3eae7] dark:border-white/10 mt-4">
-              <div
-                className="bg-center bg-no-repeat aspect-[4/3] bg-cover rounded-lg h-32 w-full sm:w-44 shrink-0"
-                data-alt="Adidas Ultraboost Cloud White"
-                style={{
-                  backgroundImage:
-                    'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBdnP4zyb9y8GdYXoTeCr8QoAWKrZAgH-UmujvchqIHtVy0gdFmxnchlhHj4peZ7aYu347tZxdKXjPBrcPCv7470j1lI0Q2OkpuK4vvsdHssoLlmDekE8Dkhhj8AtPhUq1lFYcdNlprxTviGMG9Vl3g09hKSNAb2B2oTOySTLrgfRySihPlD7w23ohmOkdKo4dSkH1Dt45a1chT7fOJQEemuXbf8Q04xkk4_LC0S-ktH6qHTe_CNrGTpWDbFK2UuhpfZLEhs7dvRKA")',
-                }}
-              />
-              <div className="flex flex-1 flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[#1b110d] dark:text-white text-lg font-bold leading-normal">
-                      Adidas Ultraboost 22
-                    </p>
-                    <p className="text-[#9a5f4c] dark:text-white/60 text-sm mt-1">
-                      Size: 9.0 US | Color: Cloud White
-                    </p>
-                  </div>
-                  <p className="text-[#1b110d] dark:text-white text-lg font-bold">
-                    $180.00
-                  </p>
-                </div>
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1 bg-[#f3eae7] dark:bg-white/10 rounded-lg p-1">
-                      <button className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white dark:hover:bg-white/20 transition-colors">
-                        <span className="material-symbols-outlined text-sm">
-                          remove
+            {showForm && (
+              <form
+                onSubmit={handleSubmit}
+                className="mb-4 p-5 rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23] bg-white dark:bg-background-dark/50 space-y-4"
+              >
+                <input
+                  name="receiverName"
+                  placeholder="Receiver Name"
+                  value={formData.receiverName}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-[#e7d5cf] dark:border-[#3d2a23] bg-transparent p-3 rounded-lg text-sm focus:outline-none focus:border-primary"
+                />
+                <input
+                  name="phone"
+                  placeholder="Phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-[#e7d5cf] dark:border-[#3d2a23] bg-transparent p-3 rounded-lg text-sm focus:outline-none focus:border-primary"
+                />
+                <input
+                  name="addressLine"
+                  placeholder="Address Line"
+                  value={formData.addressLine}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-[#e7d5cf] dark:border-[#3d2a23] bg-transparent p-3 rounded-lg text-sm focus:outline-none focus:border-primary"
+                />
+                <input
+                  name="city"
+                  placeholder="City"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-[#e7d5cf] dark:border-[#3d2a23] bg-transparent p-3 rounded-lg text-sm focus:outline-none focus:border-primary"
+                />
+                <label className="flex items-center gap-2 text-sm text-[#9a5f4c] dark:text-[#c4a195]">
+                  <input
+                    type="checkbox"
+                    name="isPrimary"
+                    checked={formData.isPrimary}
+                    onChange={handleChange}
+                    className="accent-primary"
+                  />
+                  Set as default address
+                </label>
+                <button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                  Save Address
+                </button>
+              </form>
+            )}
+            <div className="space-y-4">
+              {addresses.map((address) => {
+                const isSelected = selectedAddressId === address.id;
+                return (
+                  <label
+                    key={address.id}
+                    className={`relative flex cursor-pointer rounded-xl p-4 shadow-sm focus:outline-none ${
+                      isSelected
+                        ? "border-2 border-primary bg-primary/5 dark:bg-primary/10"
+                        : "border border-[#e7d5cf] bg-transparent hover:border-primary/50 dark:border-[#3d2a23] dark:hover:border-primary/50"
+                    }`}
+                    onClick={() => setSelectedAddressId(address.id)}
+                  >
+                    <input
+                      className="sr-only"
+                      name="shipping-address"
+                      type="radio"
+                      value={address.id}
+                      checked={isSelected}
+                      onChange={() => setSelectedAddressId(address.id)}
+                    />
+                    <span className="flex flex-1">
+                      <span className="flex flex-col">
+                        <span className="block text-sm font-bold text-background-dark dark:text-[#f3eae7] mb-1">
+                          {address.city}
+                          {address.isPrimary && (
+                            <span className="ml-2 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-white">
+                              Default
+                            </span>
+                          )}
                         </span>
-                      </button>
-                      <input
-                        className="w-8 text-center bg-transparent border-none focus:ring-0 text-sm font-bold"
-                        type="number"
-                        defaultValue={1}
-                      />
-                      <button className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white dark:hover:bg-white/20 transition-colors">
-                        <span className="material-symbols-outlined text-sm">
-                          add
+                        <span className="mt-1 flex items-center text-sm text-[#9a5f4c] dark:text-[#c4a195]">
+                          <span className="material-symbols-outlined mr-1.5 text-base">
+                            person
+                          </span>
+                          {address.receiverName}
                         </span>
-                      </button>
-                    </div>
-                  </div>
-                  <button className="flex items-center text-[#9a5f4c] dark:text-white/40 hover:text-red-500 transition-colors gap-1.5 text-sm font-bold">
-                    <span className="material-symbols-outlined text-[18px]">
-                      delete
+                        <span className="mt-1 flex items-center text-sm text-[#9a5f4c] dark:text-[#c4a195]">
+                          <span className="material-symbols-outlined mr-1.5 text-base">
+                            location_on
+                          </span>
+                          {address.addressLine}, {address.city}
+                        </span>
+                        <span className="mt-1 flex items-center text-sm text-[#9a5f4c] dark:text-[#c4a195]">
+                          <span className="material-symbols-outlined mr-1.5 text-base">
+                            phone
+                          </span>
+                          {address.phone}
+                        </span>
+                      </span>
                     </span>
-                    <span>Remove</span>
-                  </button>
-                </div>
-              </div>
+                    {isSelected ? (
+                      <span
+                        className="material-symbols-outlined text-primary absolute top-4 right-4"
+                        style={{ fontVariationSettings: '"FILL" 1' }}
+                      >
+                        check_circle
+                      </span>
+                    ) : (
+                      <span className="material-symbols-outlined text-[#e7d5cf] dark:text-[#3d2a23] absolute top-4 right-4">
+                        radio_button_unchecked
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+              {addresses.length === 0 && (
+                <p className="text-sm text-[#9a5f4c] dark:text-[#c4a195] text-center py-4">
+                  No addresses found. Please add a new address.
+                </p>
+              )}
             </div>
-            {/* ListItem 3 */}
-            <div className="flex flex-col sm:flex-row gap-6 bg-white dark:bg-white/5 p-6 rounded-xl border border-[#f3eae7] dark:border-white/10 mt-4">
-              <div
-                className="bg-center bg-no-repeat aspect-[4/3] bg-cover rounded-lg h-32 w-full sm:w-44 shrink-0"
-                data-alt="Puma RS-X Bold Blue"
-                style={{
-                  backgroundImage:
-                    'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBG86hPEDmadNoSwteOKIpa9nnfXaX1NVBuxVMM59ymYhmEKQxBSAjI_QFuu7ZWJ3dXf1Y4a02QVPD14iZ0wf3klkNPFZ3gmeMxluFMyf0l49rx-tKsDvBv0EDiLX4f6VOitenIBgUWtzM37__GjMGpBn42lUYXrRqjb94g4Fb_Cmhno9ATSKOlVYlvsSwCSRb1SnkO2oheDNAfqBHAMbdol8RY8LpH7ZB6EM26oGCwedw7RoaijMsVaDy2SfN5IfyxTAWUw7tuT-o")',
-                }}
-              />
-              <div className="flex flex-1 flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[#1b110d] dark:text-white text-lg font-bold leading-normal">
-                      Puma RS-X Reinvent
-                    </p>
-                    <p className="text-[#9a5f4c] dark:text-white/60 text-sm mt-1">
-                      Size: 11.0 US | Color: Digital Blue
-                    </p>
-                  </div>
-                  <p className="text-[#1b110d] dark:text-white text-lg font-bold">
-                    $110.00
-                  </p>
-                </div>
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1 bg-[#f3eae7] dark:bg-white/10 rounded-lg p-1">
-                      <button className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white dark:hover:bg-white/20 transition-colors">
-                        <span className="material-symbols-outlined text-sm">
-                          remove
-                        </span>
-                      </button>
-                      <input
-                        className="w-8 text-center bg-transparent border-none focus:ring-0 text-sm font-bold"
-                        type="number"
-                        defaultValue={1}
-                      />
-                      <button className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-white dark:hover:bg-white/20 transition-colors">
-                        <span className="material-symbols-outlined text-sm">
-                          add
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                  <button className="flex items-center text-[#9a5f4c] dark:text-white/40 hover:text-red-500 transition-colors gap-1.5 text-sm font-bold">
-                    <span className="material-symbols-outlined text-[18px]">
-                      delete
-                    </span>
-                    <span>Remove</span>
-                  </button>
-                </div>
-              </div>
+          </section>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 bg-green-100 border border-green-200 text-green-800 rounded-lg dark:bg-green-900/20 dark:border-green-800 dark:text-green-400">
+              <span className="material-symbols-outlined">check_circle</span>
+              <span className="text-sm font-medium">
+                Standard shipping (3-5 business days) applied to selected
+                address.
+              </span>
             </div>
           </div>
-          <a
-            className="flex items-center gap-2 text-primary font-bold mt-4"
-            href="#"
-          >
-            <span className="material-symbols-outlined">arrow_back</span>
-            <span>Continue Shopping</span>
-          </a>
         </div>
-        {/* Right Column: Summary Sidebar */}
-        <div className="w-full lg:w-[380px]">
-          <div className="sticky top-24 flex flex-col gap-6">
-            <div className="bg-white dark:bg-white/5 p-8 rounded-xl border border-[#f3eae7] dark:border-white/10 shadow-sm">
+        <div className="lg:col-span-5">
+          <div className="sticky top-24 space-y-6">
+            <section className="bg-white dark:bg-background-dark/50 p-6 rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23] shadow-sm">
               <h2 className="text-xl font-bold mb-6">Order Summary</h2>
-              <div className="flex flex-col gap-4 border-b border-[#f3eae7] dark:border-white/10 pb-6">
+              <div className="space-y-4 mb-6">
+                {order?.items.map((item) => (
+                  <div key={item.productId} className="flex gap-4">
+                    <div className="w-16 h-16 bg-[#f3eae7] dark:bg-[#3d2a23] rounded-lg overflow-hidden shrink-0">
+                      <img
+                        className="w-full h-full object-cover"
+                        alt={item.productName}
+                        src={item.imageUrl}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-sm">{item.productName}</p>
+                      <p className="text-xs text-[#9a5f4c] dark:text-[#c4a195]">
+                        Size: {item.size} | Qty: {item.quantity}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <hr className="border-[#e7d5cf] dark:border-[#3d2a23] mb-4" />
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-[#9a5f4c] dark:text-white/60">
+                  <span className="text-[#9a5f4c] dark:text-[#c4a195]">
                     Subtotal
                   </span>
-                  <span className="font-bold">$440.00</span>
+                  <span className="font-medium">
+                    {formatVndCurrency(order?.totalAmount ?? 0)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#9a5f4c] dark:text-white/60">
-                    Estimated Shipping
+                  <span className="text-[#9a5f4c] dark:text-[#c4a195]">
+                    Shipping
                   </span>
-                  <span className="text-green-600 font-bold">Free</span>
+                  <span className="font-medium text-green-600">FREE</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#9a5f4c] dark:text-white/60">
-                    Estimated Tax
+                <div className="flex justify-between text-lg font-bold pt-4 border-t border-[#e7d5cf] dark:border-[#3d2a23] mt-4">
+                  <span>Total</span>
+                  <span className="text-primary">
+                    {formatVndCurrency(order?.totalAmount ?? 0)}
                   </span>
-                  <span className="font-bold">$35.20</span>
                 </div>
               </div>
-              <div className="flex justify-between items-center py-6">
-                <span className="text-lg font-bold">Total</span>
-                <span className="text-2xl font-black text-primary">
-                  $475.20
+            </section>
+            <div>
+              <button
+                disabled={!selectedAddressId}
+                onClick={() => handlePayment()}
+                className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl transition-transform active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue to Payment
+                <span className="material-symbols-outlined">arrow_forward</span>
+              </button>
+              <p className="text-center text-[11px] text-[#9a5f4c] dark:text-[#c4a195] mt-4 flex items-center justify-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">
+                  lock
                 </span>
-              </div>
-              <div className="flex flex-col gap-4 mt-2">
-                <button className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-14 rounded-xl flex items-center justify-center gap-2 transition-all">
-                  <span>Proceed to Checkout</span>
-                  <span className="material-symbols-outlined">
-                    arrow_forward
-                  </span>
-                </button>
-                <div className="mt-4">
-                  <p className="text-xs font-bold text-[#9a5f4c] dark:text-white/40 uppercase tracking-widest mb-3">
-                    Apply Promo Code
-                  </p>
-                  <div className="flex gap-2">
-                    <input
-                      className="flex-1 bg-background-light dark:bg-white/5 border border-[#f3eae7] dark:border-white/10 rounded-lg px-4 h-10 text-sm focus:ring-primary focus:border-primary"
-                      placeholder="Code"
-                      type="text"
-                    />
-                    <button className="px-4 bg-[#1b110d] text-white dark:bg-white dark:text-background-dark text-sm font-bold rounded-lg hover:opacity-90">
-                      Apply
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Trust Badge */}
-            <div className="flex flex-col items-center gap-4 px-4 text-center">
-              <p className="text-xs text-[#9a5f4c] dark:text-white/40">
-                Secure Payment Guaranteed
+                Secure encrypted checkout
               </p>
-              <div className="flex items-center gap-4 grayscale opacity-60">
-                <span className="material-symbols-outlined text-4xl">
-                  credit_card
-                </span>
-                <span className="material-symbols-outlined text-4xl">
-                  account_balance_wallet
-                </span>
-                <span className="material-symbols-outlined text-4xl">
-                  payments
-                </span>
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 

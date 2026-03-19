@@ -19,7 +19,6 @@ export default function useAuth() {
       const data = await authApi.login(loginPayload);
 
       localStorage.setItem("accessToken", data.accessToken);
-      useAuthStore.getState().login(data.user);
 
       navigate("/", { replace: true });
     } catch (err: any) {

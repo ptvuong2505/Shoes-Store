@@ -28,3 +28,33 @@ export interface OrderDetail extends Order {
   shippingAddress?: string;
   items: OrderItem[];
 }
+
+// Checkout types
+
+export interface OrderItemCheckout {
+  productId: string;
+  productName: string;
+  imageUrl: string;
+  quantity: number;
+  price: number;
+  size: number;
+  subTotal: number;
+}
+
+export interface AddressCheckout {
+  id: string;
+  userId: string;
+  receiverName: string;
+  phone: string;
+  city: string;
+  isPrimary: boolean;
+  addressLine: string;
+}
+
+export interface OrderCheckout {
+  orderId: string;
+  status: string;
+  totalAmount: number;
+  address?: AddressCheckout;
+  items: OrderItemCheckout[];
+}

@@ -137,7 +137,7 @@ namespace Infrastructure.Service
                 MainImageUrl = productDetail.MainImageUrl,
                 ImageUrls = productDetail.ImageUrls,
                 Sizes = productDetail.Sizes,
-                Ratings = Enumerable.Range(1, 5).Reverse().Select(star => ratingDict.GetValueOrDefault(star, 0)).ToList()
+                Ratings = Enumerable.Range(1, 5).Reverse().Select(star => ratingDict.GetValueOrDefault(star, 0)).ToList(),
                 Reviews = productDetail.Reviews
             };
         }

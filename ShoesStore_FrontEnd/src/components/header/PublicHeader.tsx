@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import logo from "../../assets/logo.webp";
 import { Input } from "../ui/input";
 import { GiHamburgerMenu } from "react-icons/gi";
@@ -56,9 +56,12 @@ function PublicHeader({ onOpenMenu }: Props) {
             <button className="flex items-center justify-center p-2 text-[#9a5f4c] dark:text-[#b08e84] hover:text-primary transition-colors">
               <span className="material-symbols-outlined">notifications</span>
             </button>
-            <button className="flex items-center justify-center p-2 text-[#9a5f4c] dark:text-[#b08e84] hover:text-primary transition-colors">
+            <Link
+              to="/cart"
+              className="flex items-center justify-center p-2 text-[#9a5f4c] dark:text-[#b08e84] hover:text-primary transition-colors"
+            >
               <span className="material-symbols-outlined">shopping_cart</span>
-            </button>
+            </Link>
             <>
               {!isAuthenticated ? (
                 <>

@@ -65,7 +65,7 @@ namespace Infrastructure.Service
             return Convert.ToBase64String(bytes);
         }
 
-        public async Task<LoginResultDto> LoginAsync(string email, string password, bool isRemember)
+        public async Task<LoginResultDto> LoginAsync(string email, string password, bool isRemember = false)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)

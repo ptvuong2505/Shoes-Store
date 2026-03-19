@@ -19,12 +19,14 @@ namespace API.Controllers
     public class AuthController : ControllerBase
     {
         private IMediator _mediator;
+        private readonly IAuthService _authService;
         private AppDbContext _context;
         private UserManager<ApplicationUser> _userManager;
         private IJwtTokenService _jwtTokenService;
 
-        public AuthController(IMediator mediator, AppDbContext context, UserManager<ApplicationUser> userManager, IJwtTokenService jwtTokenService)
+        public AuthController(IAuthService authService, IMediator mediator, AppDbContext context, UserManager<ApplicationUser> userManager, IJwtTokenService jwtTokenService)
         {
+            _authService = authService;
             _mediator = mediator;
             _context = context;
             _userManager = userManager;
@@ -37,9 +39,8 @@ namespace API.Controllers
         {
             try
             {
-                var result = await _mediator.Send(new LoginCommand(loginRequestDto.Email, loginRequestDto.Password, loginRequestDto.IsRemember));
-                Console.WriteLine($"Login successful. {result.RefreshToken}");
-                Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
+                var loginResult = await _authService.LoginAsync(loginRequestDto.Email, loginRequestDto.Password, loginRequestDto.IsRemember);
+                Response.Cookies.Append("refreshToken", loginResult.RefreshToken, new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
@@ -48,8 +49,8 @@ namespace API.Controllers
                 });
                 return Ok(new
                 {
-                    accessToken = result.AccessToken,
-                    user = result.userDto
+                    accessToken = loginResult.AccessToken,
+                    user = loginResult.userDto
                 });
             }
             catch (UnauthorizedAccessException ex)

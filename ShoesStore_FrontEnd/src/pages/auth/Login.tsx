@@ -1,21 +1,37 @@
-import useAuth from "@/hooks/useAuth";
+import { authApi } from "@/api/auth.api";
+import { useAuthStore } from "@/stores/auth/auth.store";
+import type { LoginPayload } from "@/types/auth.types";
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isRemember, setIsRemember] = useState(false);
   const [show, setShow] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const { login, loading, error } = useAuth();
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      login({ email, password, isRemember });
-    } catch (err) {
-      console.log(err);
+      const data = await authApi.login({
+        email,
+        password,
+        isRemember,
+      } as LoginPayload);
+      localStorage.setItem("accessToken", data.accessToken);
+      useAuthStore.getState().login(data.user);
+      navigate("/", { replace: true });
+      console.log(data);
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,11 +76,11 @@ export default function Login() {
           )}
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
-              <label className="text-[#1b110d] dark:text-white text-sm font-semibold leading-normal">
+              <label className="text-background-dark dark:text-white text-sm font-semibold leading-normal">
                 Email Address
               </label>
               <input
-                className="form-input flex w-full min-w-0 flex-1 rounded-lg text-[#1b110d] dark:text-white border border-[#e7d5cf] dark:border-white/10 bg-transparent focus:outline-0 focus:ring-1 focus:ring-primary h-14 placeholder:text-[#9a5f4c]/60 p-3.75 text-base font-normal"
+                className="form-input flex w-full min-w-0 flex-1 rounded-lg text-background-dark dark:text-white border border-[#e7d5cf] dark:border-white/10 bg-transparent focus:outline-0 focus:ring-1 focus:ring-primary h-14 placeholder:text-[#9a5f4c]/60 p-3.75 text-base font-normal"
                 placeholder="Enter your email"
                 type="email"
                 value={email}
@@ -73,12 +89,12 @@ export default function Login() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[#1b110d] dark:text-white text-sm font-semibold leading-normal">
+              <label className="text-background-dark dark:text-white text-sm font-semibold leading-normal">
                 Password
               </label>
               <div className="flex w-full flex-1 items-stretch rounded-lg group">
                 <input
-                  className="form-input flex w-full min-w-0 flex-1 rounded-lg rounded-r-none border-r-0 text-[#1b110d] dark:text-white border border-[#e7d5cf] dark:border-white/10 bg-transparent focus:outline-0 focus:ring-0 h-14 placeholder:text-[#9a5f4c]/60 p-3.75 text-base font-normal"
+                  className="form-input flex w-full min-w-0 flex-1 rounded-lg rounded-r-none border-r-0 text-background-dark dark:text-white border border-[#e7d5cf] dark:border-white/10 bg-transparent focus:outline-0 focus:ring-0 h-14 placeholder:text-[#9a5f4c]/60 p-3.75 text-base font-normal"
                   placeholder="Enter your password"
                   type={show ? "text" : "password"}
                   value={password}
@@ -106,7 +122,7 @@ export default function Login() {
                   checked={isRemember}
                   onChange={(e) => setIsRemember(e.target.checked)}
                 />
-                <span className="text-[#1b110d] dark:text-white/80 text-sm font-medium">
+                <span className="text-background-dark dark:text-white/80 text-sm font-medium">
                   Remember me
                 </span>
               </label>
@@ -154,21 +170,21 @@ export default function Login() {
                   fill="#EA4335"
                 ></path>
               </svg>
-              <span className="text-sm font-bold text-[#1b110d] dark:text-white">
+              <span className="text-sm font-bold text-background-dark dark:text-white">
                 Google
               </span>
             </button>
             <button className="flex items-center justify-center gap-2 h-12 border border-[#e7d5cf] dark:border-white/10 rounded-lg bg-white dark:bg-transparent hover:bg-background-light dark:hover:bg-white/5 transition-colors">
-              <span className="material-symbols-outlined text-[#1b110d] dark:text-white text-[22px]">
+              <span className="material-symbols-outlined text-background-dark dark:text-white text-[22px]">
                 ios
               </span>
-              <span className="text-sm font-bold text-[#1b110d] dark:text-white">
+              <span className="text-sm font-bold text-background-dark dark:text-white">
                 Apple
               </span>
             </button>
           </div>
           <div className="text-center mt-4">
-            <p className="text-[#1b110d] dark:text-white/80 text-sm font-medium">
+            <p className="text-background-dark dark:text-white/80 text-sm font-medium">
               Don't have an account?
               <NavLink
                 to="/auth/register"

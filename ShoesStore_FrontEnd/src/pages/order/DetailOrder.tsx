@@ -1,13 +1,15 @@
 import { getOrderDetail } from "@/api/order.api";
-import UserHeader from "@/components/header/UserHeader";
+import { formatVndCurrency } from "@/lib/currency";
+
 import type { OrderDetail, OrderItem } from "@/types/order.types";
 import { useEffect, useState } from "react";
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
 
 const DetailOrder = () => {
   const { id } = useParams();
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -29,7 +31,6 @@ const DetailOrder = () => {
 
   return (
     <>
-      <UserHeader />
       {loading || !order ? (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <p>Loading order details...</p>
@@ -68,15 +69,22 @@ const DetailOrder = () => {
               <div className="flex gap-3 items-center">
                 <div className=" border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <span className="font-black text-2xl text-primary">
-                    ${order?.totalAmount.toFixed(2)}
+                    {formatVndCurrency(order?.totalAmount ?? 0)}
                   </span>
                 </div>
-                <button className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-                  <span className="material-symbols-outlined text-lg">
-                    support_agent
-                  </span>
-                  Support
-                </button>
+                {order.status === "Draff" && (
+                  <button
+                    onClick={() => {
+                      navigate(`/orders/checkout/${order.id}`);
+                    }}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      payment
+                    </span>
+                    Continue Payment
+                  </button>
+                )}
               </div>
             </div>
           </section>
@@ -104,7 +112,7 @@ const DetailOrder = () => {
                             {item.productName}
                           </h4>
                           <span className="font-black text-lg">
-                            ${item.price}
+                            {formatVndCurrency(item.price)}
                           </span>
                         </div>
 
@@ -137,14 +145,11 @@ const DetailOrder = () => {
                     </div>
                   </div>
                 </div>
-                <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                {/* <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
                   <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
                     Payment Method
                   </h5>
                   <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-slate-400">
-                      credit_card
-                    </span>
                     <div>
                       <p className="text-sm font-bold">Visa ending in 4429</p>
                       <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -152,7 +157,7 @@ const DetailOrder = () => {
                       </p>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
               {/* <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
               <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">

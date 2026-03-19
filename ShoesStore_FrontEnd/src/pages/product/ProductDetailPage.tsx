@@ -1,6 +1,7 @@
 import { productApi } from "@/api/product.api";
 import { orderApi } from "@/api/order.api";
 import ReviewItem from "@/components/review/ReviewItem";
+import { formatVndCurrency } from "@/lib/currency";
 import type { ProductDetail } from "@/types/product.type";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -12,6 +13,17 @@ const ProductDetailPage = () => {
   const [visibleReviews, setVisibleReviews] = useState(3);
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
+
+  const handleBuyNow = async () => {
+    if (!product || !selectedSize) return;
+    const orderId = await orderApi.buyNow({
+      productId: product.id,
+      size: selectedSize,
+      quantity,
+    });
+    navigate(`/orders/checkout/${orderId}`, { replace: true });
+  };
+
   useEffect(() => {
     const fetchProductDetail = async (productId: string) => {
       const data = await productApi.getProductDetailById(productId);
@@ -64,15 +76,15 @@ const ProductDetailPage = () => {
                 {product?.discountPrice ? (
                   <>
                     <span className="text-3xl font-bold text-primary">
-                      {product?.discountPrice.toLocaleString("vi-VN")}
+                      {formatVndCurrency(product?.discountPrice ?? 0)}
                     </span>
                     <span className="text-3xl font-bold line-through text-gray-500">
-                      {product?.price.toLocaleString("vi-VN")}
+                      {formatVndCurrency(product?.price ?? 0)}
                     </span>
                   </>
                 ) : (
                   <span className="text-3xl font-bold">
-                    {product?.price.toLocaleString("vi-VN")}
+                    {formatVndCurrency(product?.price ?? 0)}
                   </span>
                 )}
               </div>
@@ -209,15 +221,7 @@ const ProductDetailPage = () => {
               </div>
               <button
                 disabled={!selectedSize}
-                onClick={async () => {
-                  if (!product || !selectedSize) return;
-                  const orderId = await orderApi.buyNow({
-                    productId: product.id,
-                    size: selectedSize,
-                    quantity,
-                  });
-                  navigate(`/order/checkout/${orderId}`);
-                }}
+                onClick={handleBuyNow}
                 className="w-full border-2 border-gray-900 dark:border-white text-background-dark dark:text-white font-extrabold rounded-lg h-14 flex items-center justify-center hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 BUY IT NOW
@@ -249,8 +253,8 @@ const ProductDetailPage = () => {
                 </summary>
                 <div className="pt-4 text-sm text-gray-600 dark:text-gray-400">
                   <p>
-                    Free standard shipping on orders over $150. Easy returns
-                    within 30 days of purchase.
+                    Free standard shipping on orders over 150.000 VND. Easy
+                    returns within 30 days of purchase.
                   </p>
                 </div>
               </details>
@@ -273,7 +277,7 @@ const ProductDetailPage = () => {
                         return (
                           <span
                             key={i}
-                            className="material-symbols-outlined !text-xl"
+                            className="material-symbols-outlined text-xl!"
                             style={{ fontVariationSettings: '"FILL" 1' }}
                           >
                             star
@@ -283,7 +287,7 @@ const ProductDetailPage = () => {
                         return (
                           <span
                             key={i}
-                            className="material-symbols-outlined !text-xl"
+                            className="material-symbols-outlined text-xl!"
                             style={{ fontVariationSettings: '"FILL" 0.5' }}
                           >
                             star_half
@@ -445,7 +449,7 @@ const ProductDetailPage = () => {
             </div>
           </div>
         </div>
-        <div className="max-w-[1200px] mx-auto border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="max-w-300 mx-auto border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-gray-500">
             © 2024 StridePro Footwear. All rights reserved.
           </p>
