@@ -2,7 +2,7 @@ import axiosClient from "./axiosClient";
 import type { OrderCheckout, PagedOrderResponse } from "@/types/order.types";
 
 interface CartPayload {
-  productId: number;
+  productId: string;
   size: number;
   quantity: number;
 }
@@ -24,7 +24,7 @@ export const getOrderDetail = (id: string) => {
 };
 
 const addToCart = (payload: CartPayload) => {
-  return axiosClient.post("/cart", payload);
+  return axiosClient.post("/carts", payload);
 };
 
 const buyNow = (payload: CartPayload): Promise<{ id: string }> => {

@@ -17,7 +17,7 @@ const ProductDetailPage = () => {
   const handleBuyNow = async () => {
     if (!product || !selectedSize) return;
     const orderId = await orderApi.buyNow({
-      productId: product.id,
+      productId: String(product.id),
       size: selectedSize,
       quantity,
     });
@@ -205,7 +205,7 @@ const ProductDetailPage = () => {
                   onClick={async () => {
                     if (!product || !selectedSize) return;
                     await orderApi.addToCart({
-                      productId: product.id,
+                      productId: String(product.id),
                       size: selectedSize,
                       quantity,
                     });

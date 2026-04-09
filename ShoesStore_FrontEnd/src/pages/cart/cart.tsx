@@ -166,12 +166,13 @@ const Cart = () => {
 
     const payload = selectedItems
       .map((item) => ({
-        productId: asNumber(item.productId, 0),
+        productId: String(item.productId ?? "").trim(),
         size: asNumber(item.size, 0),
         quantity: item.quantity,
       }))
       .filter(
-        (item) => item.productId > 0 && item.size > 0 && item.quantity > 0,
+        (item) =>
+          item.productId.length > 0 && item.size > 0 && item.quantity > 0,
       );
 
     if (payload.length === 0) {
@@ -423,7 +424,9 @@ const Cart = () => {
                 <span className="material-symbols-outlined">arrow_forward</span>
               </button>
               {checkoutError && (
-                <p className="text-sm text-red-500 text-center mb-3">{checkoutError}</p>
+                <p className="text-sm text-red-500 text-center mb-3">
+                  {checkoutError}
+                </p>
               )}
               <div className="flex items-center justify-center gap-2 text-gray-500">
                 <span className="material-symbols-outlined text-sm">lock</span>

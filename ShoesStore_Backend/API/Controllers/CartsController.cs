@@ -1,4 +1,5 @@
 using Application.DTOs.Cart;
+using Application.Interface;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -11,13 +12,15 @@ namespace API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class CartController : ControllerBase
+    public class CartsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ICartService _cartService;
 
-        public CartController(AppDbContext context)
+        public CartsController(AppDbContext context, ICartService cartService)
         {
             _context = context;
+            _cartService = cartService;
         }
 
         [HttpPost]
@@ -120,62 +123,9 @@ namespace API.Controllers
                 return Unauthorized();
             }
 
-            var cartItems = await _context.CartItems
-                .Where(ci => ci.UserId.ToString() == userId)
-                .Include(ci => ci.Product)
-                    .ThenInclude(p => p.Images)
-                .Include(ci => ci.Size)
-                .ToListAsync();
+            var items = await _cartService.GetAll(userId);
 
-            var productIds = cartItems.Select(ci => ci.ProductId).Distinct().ToList();
-            var sizeIds = cartItems.Select(ci => ci.SizeId).Distinct().ToList();
-
-            var inventoryLookup = await _context.ProductInventories
-                .Where(pi => productIds.Contains(pi.ProductId) && sizeIds.Contains(pi.SizeId))
-                .ToDictionaryAsync(pi => new { pi.ProductId, pi.SizeId }, pi => pi.Quantity);
-
-            var items = cartItems.Select(ci =>
-            {
-                var key = new { ci.ProductId, ci.SizeId };
-                var availableQuantity = inventoryLookup.TryGetValue(key, out var qty) ? qty : 0;
-                var unitPrice = ci.Product.DiscountPrice ?? ci.Product.Price;
-
-                return new CartItemDto
-                {
-                    Id = ci.Id.ToString(),
-                    ProductId = ci.ProductId.ToString(),
-                    ProductName = ci.Product.Name,
-                    VariantLabel = $"Size {ci.Size.Value}",
-                    Color = null,
-                    Size = ci.Size.Value.ToString(),
-                    Quantity = ci.Quantity,
-                    UnitPrice = unitPrice,
-                    ImageUrl = ci.Product.Images.FirstOrDefault(i => i.IsMain)?.ImageUrl
-                        ?? ci.Product.Images.FirstOrDefault()?.ImageUrl
-                        ?? string.Empty,
-                    IsAvailable = availableQuantity >= ci.Quantity,
-                    Selected = true
-                };
-            }).ToList();
-
-            var selectedSubtotal = items.Sum(i => i.UnitPrice * i.Quantity);
-            var shippingFee = 0m;
-            var estimatedTax = 0m;
-
-            var response = new CartResponseDto
-            {
-                Items = items,
-                Summary = new CartSummaryDto
-                {
-                    SelectedItems = items.Count,
-                    SelectedSubtotal = selectedSubtotal,
-                    ShippingFee = shippingFee,
-                    EstimatedTax = estimatedTax,
-                    TotalPrice = selectedSubtotal + shippingFee + estimatedTax
-                }
-            };
-
-            return Ok(response);
+            return Ok(items);
         }
     }
 }

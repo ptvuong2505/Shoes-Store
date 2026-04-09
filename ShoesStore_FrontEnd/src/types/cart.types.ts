@@ -22,5 +22,5 @@ export interface CartSummary {
 
 export interface CartResponse {
   items: CartItem[];
-  summary?: Partial<CartSummary>;
+  summary?: CartSummary;
 }
