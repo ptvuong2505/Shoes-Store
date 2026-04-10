@@ -16,5 +16,6 @@ namespace Application.Interface
         Task<string> CheckoutCartAsync(string userId, List<BuyNowRequest> requests);
         Task<OrderCheckoutDto?> GetOrderCheckoutInfoAsync(string userId, string orderId);
         Task PaymentAsync(string userId, string orderId, string selectedAddressId);
+        Task<AdminDashboardDto> GetAdminDashboardAsync();
     }
 }

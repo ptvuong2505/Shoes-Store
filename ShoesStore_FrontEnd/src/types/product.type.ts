@@ -46,3 +46,39 @@ export interface FilterOptions {
   genders: string[];
   sizes: number[];
 }
+
+export interface AdminProductSummary {
+  totalProducts: number;
+  outOfStockProducts: number;
+  topSellingProductName: string;
+  topSellingUnits: number;
+  averageMarginPercent: number;
+}
+
+export interface AdminProductItem {
+  id: string;
+  name: string;
+  sku: string;
+  brand: string;
+  price: number;
+  mainImageUrl?: string;
+  totalStock: number;
+  stockStatus: "In Stock" | "Low Stock" | "Out of Stock" | string;
+}
+
+export interface AdminProductsResponse {
+  summary: AdminProductSummary;
+  data: PagedResult<AdminProductItem>;
+}
+
+export interface AdminUpsertProductPayload {
+  name: string;
+  brand: string;
+  price: number;
+  discountPrice?: number;
+  totalStock: number;
+  size: number;
+  mainImageUrl?: string;
+  description?: string;
+  gender?: string;
+}

@@ -1,4 +1,7 @@
 import type {
+  AdminProductItem,
+  AdminProductsResponse,
+  AdminUpsertProductPayload,
   FilterOptions,
   PagedResult,
   Product,
@@ -30,5 +33,31 @@ export const productApi = {
   },
   getProductDetailById: async (id: string): Promise<ProductDetail> => {
     return axiosClient.get(`/products/${id}`);
+  },
+  getAdminProducts: async (
+    page = 1,
+    pageSize = 10,
+    search = "",
+  ): Promise<AdminProductsResponse> => {
+    const params = new URLSearchParams();
+    params.append("Page", String(page));
+    params.append("PageSize", String(pageSize));
+    if (search.trim()) params.append("Search", search.trim());
+
+    return axiosClient.get(`/products/admin?${params.toString()}`);
+  },
+  createAdminProduct: async (
+    payload: AdminUpsertProductPayload,
+  ): Promise<AdminProductItem> => {
+    return axiosClient.post("/products/admin", payload);
+  },
+  updateAdminProduct: async (
+    id: string,
+    payload: AdminUpsertProductPayload,
+  ): Promise<AdminProductItem> => {
+    return axiosClient.put(`/products/admin/${id}`, payload);
+  },
+  deleteAdminProduct: async (id: string): Promise<void> => {
+    return axiosClient.delete(`/products/admin/${id}`);
   },
 };

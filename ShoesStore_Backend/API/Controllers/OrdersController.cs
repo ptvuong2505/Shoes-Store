@@ -19,6 +19,14 @@ namespace API.Controllers
             _orderService = orderService;
         }
 
+        [Authorize]
+        [HttpGet("admin/dashboard")]
+        public async Task<IActionResult> GetAdminDashboard()
+        {
+            var result = await _orderService.GetAdminDashboardAsync();
+            return Ok(result);
+        }
+
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetMyOrders(
                 [FromQuery] int page = 1,

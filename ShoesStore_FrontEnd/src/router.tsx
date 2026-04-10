@@ -20,6 +20,9 @@ import Products from "./pages/Products";
 import ProductDetailPage from "./pages/product/ProductDetailPage";
 import OrderCheckout from "./pages/order/OrderCheckout";
 import Cart from "./pages/cart/cart";
+import AdminLayout from "./layouts/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/AdminProducts";
 
 export const router = createBrowserRouter([
   {
@@ -65,6 +68,14 @@ export const router = createBrowserRouter([
         path: "checkout/:id",
         element: <OrderCheckout />,
       },
+    ],
+  },
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: "products", element: <AdminProducts /> },
     ],
   },
 ]);

@@ -30,6 +30,44 @@ namespace API.Controllers
             return Ok(products);
         }
 
+        [HttpGet("admin")]
+        public async Task<IActionResult> GetAdminProducts([FromQuery] AdminProductFilter filter)
+        {
+            var result = await _productService.GetAdminProductsAsync(filter);
+            return Ok(result);
+        }
+
+        [HttpPost("admin")]
+        public async Task<IActionResult> CreateAdminProduct([FromBody] AdminUpsertProductRequest request)
+        {
+            var result = await _productService.CreateAdminProductAsync(request);
+            return Ok(result);
+        }
+
+        [HttpPut("admin/{id}")]
+        public async Task<IActionResult> UpdateAdminProduct(string id, [FromBody] AdminUpsertProductRequest request)
+        {
+            var result = await _productService.UpdateAdminProductAsync(id, request);
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
+        }
+
+        [HttpDelete("admin/{id}")]
+        public async Task<IActionResult> DeleteAdminProduct(string id)
+        {
+            var deleted = await _productService.DeleteAdminProductAsync(id);
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
         [HttpGet("filters")]
         public async Task<IActionResult> GetFiltersAsync()
         {
@@ -41,7 +79,7 @@ namespace API.Controllers
         public async Task<IActionResult> GetProductDetailByIdAsync(string id)
         {
             var productDetail = await _productService.GetProductDetailAsync(id);
-            if(productDetail == null)
+            if (productDetail == null)
             {
                 return NotFound();
             }

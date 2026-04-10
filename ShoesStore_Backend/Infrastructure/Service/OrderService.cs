@@ -292,6 +292,144 @@ namespace Infrastructure.Service
 
         }
 
+        public async Task<AdminDashboardDto> GetAdminDashboardAsync()
+        {
+            var now = DateTime.UtcNow;
+            var currentPeriodStart = now.AddDays(-30);
+            var previousPeriodStart = now.AddDays(-60);
+            var invalidStatuses = new[] { "Draff", "Cancelled", "Canceled" };
+
+            var validOrders = _context.Orders
+                .Where(o => !invalidStatuses.Contains(o.Status));
+
+            var currentSales = await validOrders
+                .Where(o => o.CreatedAt >= currentPeriodStart)
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0m;
+
+            var previousSales = await validOrders
+                .Where(o => o.CreatedAt >= previousPeriodStart && o.CreatedAt < currentPeriodStart)
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0m;
+
+            var currentOrders = await _context.Orders
+                .Where(o => o.CreatedAt >= currentPeriodStart)
+                .CountAsync();
+
+            var previousOrders = await _context.Orders
+                .Where(o => o.CreatedAt >= previousPeriodStart && o.CreatedAt < currentPeriodStart)
+                .CountAsync();
+
+            var firstOrdersByUsers = await _context.Orders
+                .GroupBy(o => o.UserId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    FirstOrderAt = g.Min(x => x.CreatedAt)
+                })
+                .ToListAsync();
+
+            var currentNewCustomers = firstOrdersByUsers.Count(x => x.FirstOrderAt >= currentPeriodStart);
+            var previousNewCustomers = firstOrdersByUsers.Count(x => x.FirstOrderAt >= previousPeriodStart && x.FirstOrderAt < currentPeriodStart);
+
+            var currentActiveUsers = await _context.Orders
+                .Where(o => o.CreatedAt >= currentPeriodStart)
+                .Select(o => o.UserId)
+                .Distinct()
+                .CountAsync();
+
+            var previousActiveUsers = await _context.Orders
+                .Where(o => o.CreatedAt >= previousPeriodStart && o.CreatedAt < currentPeriodStart)
+                .Select(o => o.UserId)
+                .Distinct()
+                .CountAsync();
+
+            var monthlyRevenueRaw = await validOrders
+                .Where(o => o.CreatedAt.Year == now.Year)
+                .GroupBy(o => o.CreatedAt.Month)
+                .Select(g => new
+                {
+                    Month = g.Key,
+                    Revenue = g.Sum(x => x.TotalAmount)
+                })
+                .ToListAsync();
+
+            var monthlyRevenueMap = monthlyRevenueRaw.ToDictionary(x => x.Month, x => x.Revenue);
+            var revenueByMonth = Enumerable.Range(1, 12)
+                .Select(month => new DashboardRevenuePointDto
+                {
+                    Month = month,
+                    Revenue = monthlyRevenueMap.TryGetValue(month, out var revenue) ? revenue : 0m
+                })
+                .ToList();
+
+            var recentOrders = await _context.Orders
+                .Include(o => o.User)
+                .OrderByDescending(o => o.CreatedAt)
+                .Take(6)
+                .Select(o => new DashboardRecentOrderDto
+                {
+                    OrderId = o.Id.ToString(),
+                    CustomerName = o.User.UserName ?? o.User.Email ?? "Unknown",
+                    Status = o.Status,
+                    TotalAmount = o.TotalAmount
+                })
+                .ToListAsync();
+
+            var topProductRaw = await _context.OrderItems
+                .Where(oi => !invalidStatuses.Contains(oi.Order.Status))
+                .GroupBy(oi => new { oi.ProductId, oi.Product.Name })
+                .Select(g => new
+                {
+                    ProductId = g.Key.ProductId,
+                    ProductName = g.Key.Name,
+                    UnitsSold = g.Sum(x => x.Quantity),
+                    UnitPrice = g.OrderByDescending(x => x.Order.CreatedAt).Select(x => x.Price).FirstOrDefault()
+                })
+                .OrderByDescending(x => x.UnitsSold)
+                .Take(4)
+                .ToListAsync();
+
+            var topProductIds = topProductRaw.Select(x => x.ProductId).ToList();
+
+            var topProductImageMap = await _context.ProductImages
+                .Where(pi => topProductIds.Contains(pi.ProductId))
+                .GroupBy(pi => pi.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    ImageUrl = g.OrderByDescending(x => x.IsMain).Select(x => x.ImageUrl).FirstOrDefault()
+                })
+                .ToDictionaryAsync(x => x.ProductId, x => x.ImageUrl);
+
+            var topProducts = topProductRaw
+                .Select(p => new DashboardTopProductDto
+                {
+                    ProductId = p.ProductId.ToString(),
+                    ProductName = p.ProductName,
+                    UnitsSold = p.UnitsSold,
+                    UnitPrice = p.UnitPrice,
+                    ImageUrl = topProductImageMap.TryGetValue(p.ProductId, out var imageUrl) ? imageUrl : null
+                })
+                .ToList();
+
+            return new AdminDashboardDto
+            {
+                Summary = new DashboardSummaryDto
+                {
+                    TotalSales = currentSales,
+                    TotalSalesGrowthPercent = CalculateGrowthPercent(currentSales, previousSales),
+                    TotalOrders = currentOrders,
+                    TotalOrdersGrowthPercent = CalculateGrowthPercent(currentOrders, previousOrders),
+                    NewCustomers = currentNewCustomers,
+                    NewCustomersGrowthPercent = CalculateGrowthPercent(currentNewCustomers, previousNewCustomers),
+                    ActiveUsers = currentActiveUsers,
+                    ActiveUsersGrowthPercent = CalculateGrowthPercent(currentActiveUsers, previousActiveUsers)
+                },
+                RevenueByMonth = revenueByMonth,
+                RecentOrders = recentOrders,
+                TopProducts = topProducts
+            };
+        }
+
         public async Task PaymentAsync(string userId, string orderId, string selectedAddressId)
         {
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id.ToString() == orderId && o.UserId.ToString() == userId);
@@ -306,6 +444,26 @@ namespace Infrastructure.Service
             order.Status = "Paid";
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
+        }
+
+        private static double CalculateGrowthPercent(decimal current, decimal previous)
+        {
+            if (previous == 0m)
+            {
+                return current == 0m ? 0d : 100d;
+            }
+
+            return Math.Round((double)((current - previous) / previous * 100m), 1);
+        }
+
+        private static double CalculateGrowthPercent(int current, int previous)
+        {
+            if (previous == 0)
+            {
+                return current == 0 ? 0d : 100d;
+            }
+
+            return Math.Round(((current - previous) / (double)previous) * 100d, 1);
         }
     }
 }
