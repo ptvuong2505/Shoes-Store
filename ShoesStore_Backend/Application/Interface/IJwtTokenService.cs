@@ -11,5 +11,6 @@ namespace Application.Interface
     {
         string? CreateAccessToken(ApplicationUser user, IList<string> roles);
         string? CreateRefreshToken();
+        Task RevokeRefreshTokenAsync(string refreshToken);
     }
 }

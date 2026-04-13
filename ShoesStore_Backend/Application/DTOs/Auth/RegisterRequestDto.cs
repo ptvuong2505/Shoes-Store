@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Auth
 {
-    public record RegisterRequestDto(string Email, string Password, string ConfirmPassword);
+    public record RegisterRequestDto(string UserName, string Email, string Phone, string Password, string ConfirmPassword);
 }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.Features.Auth
 {
-    public record LoginCommand(string Email, string Password) : IRequest<LoginResultDto>;
+    public record LoginCommand(string Email, string Password, bool IsRemember) : IRequest<LoginResultDto>;
 
     public class LoginHandler : IRequestHandler<LoginCommand, LoginResultDto>
     {
@@ -24,7 +24,7 @@ namespace Application.Features.Auth
 
         public async Task<LoginResultDto> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            return await _authService.LoginAsync(request.Email, request.Password);
+            return await _authService.LoginAsync(request.Email, request.Password, request.IsRemember);
         }
     }
 }

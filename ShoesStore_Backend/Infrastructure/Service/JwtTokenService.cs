@@ -8,7 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Interface;
 using Domain.Identity;
+using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -17,9 +19,11 @@ namespace Infrastructure.Service
     public class JwtTokenService : IJwtTokenService
     {
         IConfiguration _configuration;
-        public JwtTokenService(IConfiguration configuration)
+        private readonly AppDbContext _context;
+        public JwtTokenService(IConfiguration configuration, AppDbContext context)
         {
             _configuration = configuration;
+            _context = context;
         }
 
         public string? CreateAccessToken(ApplicationUser user, IList<string> roles)
@@ -30,12 +34,18 @@ namespace Infrastructure.Service
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            foreach(var role in roles)
+            foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var jwtSecretKey = _configuration["Jwt:SecretKey"];
+            if (string.IsNullOrWhiteSpace(jwtSecretKey))
+            {
+                throw new InvalidOperationException("Jwt:SecretKey is not configured.");
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -53,6 +63,16 @@ namespace Infrastructure.Service
         {
             var randomBytes = RandomNumberGenerator.GetBytes(64);
             return Convert.ToBase64String(randomBytes);
+        }
+
+        public async Task RevokeRefreshTokenAsync(string refreshToken)
+        {
+            var revokeRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(r => r.Token.Equals(refreshToken));
+            if (revokeRefreshToken != null)
+            {
+                revokeRefreshToken.IsRevoked = true;
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
