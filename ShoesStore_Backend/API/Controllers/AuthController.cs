@@ -23,14 +23,16 @@ namespace API.Controllers
         private AppDbContext _context;
         private UserManager<ApplicationUser> _userManager;
         private IJwtTokenService _jwtTokenService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, IMediator mediator, AppDbContext context, UserManager<ApplicationUser> userManager, IJwtTokenService jwtTokenService)
+        public AuthController(IAuthService authService, IMediator mediator, AppDbContext context, UserManager<ApplicationUser> userManager, IJwtTokenService jwtTokenService, IConfiguration configuration)
         {
             _authService = authService;
             _mediator = mediator;
             _context = context;
             _userManager = userManager;
             _jwtTokenService = jwtTokenService;
+            _configuration = configuration;
         }
 
         [AllowAnonymous]
@@ -40,13 +42,8 @@ namespace API.Controllers
             try
             {
                 var loginResult = await _authService.LoginAsync(loginRequestDto.Email, loginRequestDto.Password, loginRequestDto.IsRemember);
-                Response.Cookies.Append("refreshToken", loginResult.RefreshToken, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
-                    Expires = loginRequestDto.IsRemember ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(2)
-                });
+                var expiresAt = loginRequestDto.IsRemember ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(2);
+                Response.Cookies.Append("refreshToken", loginResult.RefreshToken, BuildRefreshCookieOptions(expiresAt));
                 return Ok(new
                 {
                     accessToken = loginResult.AccessToken,
@@ -115,13 +112,7 @@ namespace API.Controllers
             await _context.RefreshTokens.AddAsync(newRefreshTokenEntity);
             await _context.SaveChangesAsync();
 
-            Response.Cookies.Append("refreshToken", newRefreshToken!, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
-            });
+            Response.Cookies.Append("refreshToken", newRefreshToken!, BuildRefreshCookieOptions(DateTimeOffset.UtcNow.AddDays(7)));
             return Ok(new
             {
                 accessToken = accessToken,
@@ -161,10 +152,37 @@ namespace API.Controllers
             {
                 await _mediator.Send(new VerifyOtpCommand(verifyOtpRequestDto.Email, verifyOtpRequestDto.Otp));
                 return Ok();
-            } catch (InvalidOperationException ex)
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(new { Message = ex.Message });
             }
+        }
+
+        private CookieOptions BuildRefreshCookieOptions(DateTimeOffset expiresAt)
+        {
+            var isSecure = _configuration.GetValue<bool?>("Auth:RefreshTokenCookie:Secure") ?? true;
+            var sameSiteRaw = _configuration["Auth:RefreshTokenCookie:SameSite"];
+            var sameSite = SameSiteMode.None;
+
+            if (!string.IsNullOrWhiteSpace(sameSiteRaw)
+                && Enum.TryParse<SameSiteMode>(sameSiteRaw, ignoreCase: true, out var parsedSameSite))
+            {
+                sameSite = parsedSameSite;
+            }
+
+            if (!isSecure && sameSite == SameSiteMode.None)
+            {
+                sameSite = SameSiteMode.Lax;
+            }
+
+            return new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = isSecure,
+                SameSite = sameSite,
+                Expires = expiresAt
+            };
         }
 
         //[HttpPost("reset-password")]

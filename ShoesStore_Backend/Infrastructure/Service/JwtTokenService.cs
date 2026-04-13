@@ -34,12 +34,18 @@ namespace Infrastructure.Service
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            foreach(var role in roles)
+            foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var jwtSecretKey = _configuration["Jwt:SecretKey"];
+            if (string.IsNullOrWhiteSpace(jwtSecretKey))
+            {
+                throw new InvalidOperationException("Jwt:SecretKey is not configured.");
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -61,7 +67,7 @@ namespace Infrastructure.Service
 
         public async Task RevokeRefreshTokenAsync(string refreshToken)
         {
-            var revokeRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(r=> r.Token.Equals(refreshToken));
+            var revokeRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(r => r.Token.Equals(refreshToken));
             if (revokeRefreshToken != null)
             {
                 revokeRefreshToken.IsRevoked = true;
