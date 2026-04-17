@@ -11,12 +11,12 @@ namespace Domain.Entities
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
 
-        public string Method { get; set; } // COD / ONLINE
-        public string Status { get; set; } // Pending / Paid / Failed
+        public string Method { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
 
         public DateTime PaidAt { get; set; }
 
-        public Order Order { get; set; }
+        public Order Order { get; set; } = null!;
     }
 
 }

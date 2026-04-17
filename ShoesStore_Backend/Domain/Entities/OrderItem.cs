@@ -17,9 +17,9 @@ namespace Domain.Entities
         public int Quantity { get; set; }
         public decimal Price { get; set; }
 
-        public Order Order { get; set; }
-        public Product Product { get; set; }
-        public Size Size { get; set; }
+        public Order Order { get; set; } = null!;
+        public Product Product { get; set; } = null!;
+        public Size Size { get; set; } = null!;
     }
 
 }

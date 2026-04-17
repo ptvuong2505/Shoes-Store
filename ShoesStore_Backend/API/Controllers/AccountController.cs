@@ -1,6 +1,6 @@
 ﻿using Application.DTOs.Account;
 using Application.DTOs.Address;
-using Application.Interface;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

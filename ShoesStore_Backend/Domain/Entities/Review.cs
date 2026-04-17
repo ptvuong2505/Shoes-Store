@@ -14,13 +14,13 @@ namespace Domain.Entities
         public Guid UserId { get; set; }
         public Guid ProductId { get; set; }
 
-        public int Rating { get; set; } // 1–5
-        public string Comment { get; set; }
+        public int Rating { get; set; }
+        public string Comment { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; }
 
-        public ApplicationUser User { get; set; }
-        public Product Product { get; set; }
+        public ApplicationUser User { get; set; } = null!;
+        public Product Product { get; set; } = null!;
     }
 
 }

@@ -10,11 +10,11 @@ namespace Domain.Entities
     {
         public Guid Id { get; set; }
 
-        public string ImageUrl { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
 
-        public bool IsMain { get; set; } = false ; // ảnh chính
+        public bool IsMain { get; set; } = false;
 
         public Guid ProductId { get; set; }
-        public Product Product { get; set; }
+        public Product Product { get; set; } = null!;
     }
 }
