@@ -50,6 +50,10 @@ const AdminLayout = () => {
             <span className="material-symbols-outlined">people</span>
             <span className="text-sm font-medium">Customers</span>
           </NavLink>
+          <NavLink className={activeStyle} to="chat">
+            <span className="material-symbols-outlined">forum</span>
+            <span className="text-sm font-medium">Chat</span>
+          </NavLink>
         </nav>
         <div className="p-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 px-3 py-2">

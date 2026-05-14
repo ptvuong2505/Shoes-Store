@@ -15,6 +15,7 @@ function PublicHeader({ onOpenMenu }: Props) {
   const Menu = [
     { label: "Home", path: "/" },
     { label: "Find", path: "/products" },
+    { label: "Chat", path: "/chat" },
   ];
   const activeStyle = ({ isActive }: { isActive: boolean }) => {
     return (

@@ -21,6 +21,8 @@ import AdminLayout from "@/features/admin/layouts/AdminLayout";
 import AdminDashboardPage from "@/features/admin/pages/AdminDashboardPage";
 import AdminProductsPage from "@/features/admin/pages/AdminProductsPage";
 import { AdminOrderPage } from "@/features/admin/pages/AdminOrderPage";
+import { AdminChatPage } from "@/features/admin/pages/AdminChatPage";
+import { Chat } from "@/features/chat/pages/Chat";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +33,7 @@ export const router = createBrowserRouter([
       { path: "products", element: <ProductsPage /> },
       { path: "products/:id", element: <ProductDetailPage /> },
       { path: "cart", element: <CartPage /> },
+      { path: "chat", element: <Chat /> },
     ],
   },
   {
@@ -72,6 +75,7 @@ export const router = createBrowserRouter([
       { index: true, element: <AdminDashboardPage /> },
       { path: "products", element: <AdminProductsPage /> },
       { path: "orders", element: <AdminOrderPage /> },
+      { path: "chat", element: <AdminChatPage /> },
     ],
   },
 ]);
