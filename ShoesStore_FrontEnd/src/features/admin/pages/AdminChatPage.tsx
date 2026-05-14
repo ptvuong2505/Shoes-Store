@@ -1,19 +1,24 @@
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import {
   CheckCheck,
   Clock3,
+  Loader2,
   MessageCircle,
   MoreVertical,
   Search,
   Send,
   UserRound,
 } from "lucide-react";
-import { adminConversations } from "@/features/chat/data/chat.mock";
+import {
+  chatApi,
+  mapConversationDtoToChatConversation,
+} from "@/features/chat/api/chat.api";
 import { useChatConnection } from "@/features/chat/hooks/useChatConnection";
 import type {
   ChatConversation,
   ChatMessage,
 } from "@/features/chat/types/chat.types";
+import { useAuthStore } from "@/shared/state/auth.store";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -21,18 +26,79 @@ import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/lib/utils";
 
 export const AdminChatPage = () => {
+  const { user } = useAuthStore();
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeConversationId, setActiveConversationId] = useState(
-    adminConversations[0]?.id ?? "",
-  );
+  const [activeConversationId, setActiveConversationId] = useState("");
   const [messageText, setMessageText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const token = localStorage.getItem("accessToken") ?? undefined;
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await chatApi.getAdminConversations();
+        const nextConversations = data.map((conversation) =>
+          mapConversationDtoToChatConversation(conversation, user?.id),
+        );
+
+        setConversations(nextConversations);
+        setActiveConversationId((currentId) =>
+          currentId || nextConversations[0]?.id || "",
+        );
+      } catch {
+        setError("Khong the tai danh sach chat. Vui long thu lai.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchConversations();
+  }, [user?.id]);
+
+  const activeConversation =
+    conversations.find(
+      (conversation) => conversation.id === activeConversationId,
+    ) ?? conversations[0];
+
+  const handleReceiveMessage = useCallback((message: ChatMessage) => {
+    setConversations((currentConversations) =>
+      currentConversations.map((conversation) => {
+        const belongsToConversation =
+          message.senderId === conversation.customer.id ||
+          message.conversationId.includes(conversation.customer.id);
+
+        if (!belongsToConversation) return conversation;
+
+        const alreadyExists = conversation.messages.some(
+          (currentMessage) => currentMessage.id === message.id,
+        );
+        const messages = alreadyExists
+          ? conversation.messages
+          : [...conversation.messages, message];
+
+        return {
+          ...conversation,
+          messages,
+          lastMessageAt: message.createdAt,
+          unreadCount:
+            message.senderRole === "customer"
+              ? conversation.unreadCount + 1
+              : conversation.unreadCount,
+        };
+      }),
+    );
+  }, []);
 
   const filteredConversations = useMemo(() => {
     const normalizedTerm = searchTerm.trim().toLowerCase();
 
-    if (!normalizedTerm) return adminConversations;
+    if (!normalizedTerm) return conversations;
 
-    return adminConversations.filter((conversation) => {
+    return conversations.filter((conversation) => {
       const customer = conversation.customer;
 
       return (
@@ -41,12 +107,7 @@ export const AdminChatPage = () => {
         conversation.orderHint?.toLowerCase().includes(normalizedTerm)
       );
     });
-  }, [searchTerm]);
-
-  const activeConversation =
-    adminConversations.find(
-      (conversation) => conversation.id === activeConversationId,
-    ) ?? adminConversations[0];
+  }, [conversations, searchTerm]);
 
   const initialMessages = useMemo(
     () => activeConversation?.messages ?? [],
@@ -55,17 +116,41 @@ export const AdminChatPage = () => {
   const { messages, sendMessage, status, isConnected } = useChatConnection({
     conversationId: activeConversation?.id ?? "",
     initialMessages,
+    token,
+    mode: "admin",
+    onReceiveMessage: handleReceiveMessage,
   });
+
+  const handleSelectConversation = async (conversationId: string) => {
+    setActiveConversationId(conversationId);
+
+    const conversation = conversations.find(
+      (currentConversation) => currentConversation.id === conversationId,
+    );
+
+    if (!conversation) return;
+
+    setConversations((currentConversations) =>
+      currentConversations.map((currentConversation) =>
+        currentConversation.id === conversationId
+          ? { ...currentConversation, unreadCount: 0 }
+          : currentConversation,
+      ),
+    );
+
+    await chatApi.markConversationAsRead(conversation.customer.id);
+  };
 
   const handleSendMessage = async () => {
     const content = messageText.trim();
 
-    if (!content || !activeConversation) return;
+    if (!content || !activeConversation || !user) return;
 
     await sendMessage({
       conversationId: activeConversation.id,
-      senderId: activeConversation.admin.id,
+      senderId: user.id,
       senderRole: "admin",
+      toUserId: activeConversation.customer.id,
       content,
     });
 
@@ -130,13 +215,25 @@ export const AdminChatPage = () => {
               </span>
             </div>
 
+            {loading && (
+              <div className="flex justify-center py-8">
+                <Loader2 className="size-6 animate-spin text-primary" />
+              </div>
+            )}
+
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-2">
               {filteredConversations.map((conversation) => (
                 <ConversationPortal
                   key={conversation.id}
                   conversation={conversation}
                   isActive={conversation.id === activeConversation?.id}
-                  onSelect={() => setActiveConversationId(conversation.id)}
+                  onSelect={() => void handleSelectConversation(conversation.id)}
                 />
               ))}
             </div>
@@ -188,21 +285,6 @@ export const AdminChatPage = () => {
                 {messages.map((message) => (
                   <AdminMessageBubble key={message.id} message={message} />
                 ))}
-
-                {activeConversation.isTyping && (
-                  <div className="flex items-end gap-2">
-                    <Avatar size="sm">
-                      <AvatarFallback className="bg-slate-100 text-[10px] font-bold text-slate-700">
-                        {activeConversation.customer.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center gap-1 rounded-lg rounded-bl-sm border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                      <span className="size-1.5 rounded-full bg-slate-400" />
-                      <span className="size-1.5 rounded-full bg-slate-400" />
-                      <span className="size-1.5 rounded-full bg-slate-400" />
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -218,7 +300,7 @@ export const AdminChatPage = () => {
                 <Button
                   size="icon-lg"
                   onClick={() => void handleSendMessage()}
-                  disabled={!messageText.trim()}
+                  disabled={!messageText.trim() || !isConnected}
                   className="shrink-0 rounded-lg"
                 >
                   <Send />

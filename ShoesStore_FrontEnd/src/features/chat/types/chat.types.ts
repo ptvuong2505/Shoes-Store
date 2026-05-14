@@ -43,4 +43,36 @@ export interface SendChatMessageInput {
   senderId: string;
   senderRole: ChatSenderRole;
   content: string;
+  toUserId?: string;
+}
+
+export interface ChatMessageDto {
+  id: string;
+  fromUserId: string;
+  toUserId: string;
+  message: string;
+  isRead: boolean;
+  sentAt: string;
+  senderName: string;
+  senderRole: "Admin" | "Customer";
+}
+
+export interface ChatConversationDto {
+  customerId: string;
+  customerName: string;
+  customerEmail?: string;
+  customerAvatarUrl?: string;
+  unreadCount: number;
+  lastMessageAt?: string;
+  lastMessage?: ChatMessageDto;
+  messages: ChatMessageDto[];
+}
+
+export interface SendCustomerChatMessageRequest {
+  message: string;
+}
+
+export interface SendAdminChatMessageRequest {
+  toUserId: string;
+  message: string;
 }

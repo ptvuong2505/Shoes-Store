@@ -1,39 +1,78 @@
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import {
   ArrowLeft,
   CheckCheck,
+  Loader2,
   MessageCircle,
   Send,
   ShieldCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { customerConversation } from "@/features/chat/data/chat.mock";
+import {
+  chatApi,
+  mapConversationDtoToChatConversation,
+} from "@/features/chat/api/chat.api";
 import { useChatConnection } from "@/features/chat/hooks/useChatConnection";
-import type { ChatMessage } from "@/features/chat/types/chat.types";
+import type {
+  ChatConversation,
+  ChatMessage,
+} from "@/features/chat/types/chat.types";
+import { useAuthStore } from "@/shared/state/auth.store";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/lib/utils";
 
 export const Chat = () => {
+  const { user, isAuthenticated } = useAuthStore();
+  const [conversation, setConversation] = useState<ChatConversation | null>(
+    null,
+  );
   const [messageText, setMessageText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const token = localStorage.getItem("accessToken") ?? undefined;
   const initialMessages = useMemo(
-    () => customerConversation.messages,
-    [],
+    () => conversation?.messages ?? [],
+    [conversation],
   );
   const { messages, sendMessage, isConnected, status } = useChatConnection({
-    conversationId: customerConversation.id,
+    conversationId: conversation?.id ?? user?.id ?? "customer-chat",
     initialMessages,
+    token,
+    mode: "customer",
   });
+
+  useEffect(() => {
+    const fetchConversation = async () => {
+      if (!isAuthenticated) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await chatApi.getMyConversation();
+        setConversation(mapConversationDtoToChatConversation(data));
+      } catch {
+        setError("Khong the tai cuoc chat. Vui long thu lai.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchConversation();
+  }, [isAuthenticated]);
 
   const handleSendMessage = async () => {
     const content = messageText.trim();
 
-    if (!content) return;
+    if (!content || !conversation || !user) return;
 
     await sendMessage({
-      conversationId: customerConversation.id,
-      senderId: customerConversation.customer.id,
+      conversationId: conversation.id,
+      senderId: user.id,
       senderRole: "customer",
       content,
     });
@@ -50,6 +89,43 @@ export const Chat = () => {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <main className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-background px-4 py-8">
+        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-background-dark/40">
+          <MessageCircle className="mx-auto mb-3 size-10 text-primary" />
+          <h1 className="text-xl font-extrabold text-slate-950 dark:text-white">
+            Dang nhap de chat voi admin
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Ban can dang nhap de gui tin nhan va xem lich su ho tro.
+          </p>
+          <Button asChild className="mt-5">
+            <Link to="/auth/login">Dang nhap</Link>
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
+  if (loading) {
+    return (
+      <main className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-background">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </main>
+    );
+  }
+
+  if (error || !conversation) {
+    return (
+      <main className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-background px-4 py-8">
+        <div className="max-w-md rounded-xl border border-red-200 bg-white p-6 text-center text-red-700 shadow-sm">
+          {error ?? "Khong tim thay cuoc chat."}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-[calc(100vh-80px)] bg-background px-4 py-6 sm:px-6 lg:px-8">
       <section className="mx-auto flex h-[calc(100vh-128px)] min-h-[620px] max-w-4xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-background-dark/40">
@@ -64,7 +140,7 @@ export const Chat = () => {
 
             <Avatar size="lg" className="bg-primary/10 text-primary">
               <AvatarFallback className="bg-primary/10 font-bold text-primary">
-                {customerConversation.admin.initials}
+                {conversation.admin.initials}
               </AvatarFallback>
               <AvatarBadge className="bg-green-500" />
             </Avatar>
@@ -86,7 +162,7 @@ export const Chat = () => {
 
           <div className="hidden items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary sm:flex">
             <MessageCircle className="size-4" />
-            {customerConversation.orderHint}
+            {conversation.orderHint}
           </div>
         </header>
 
@@ -99,21 +175,6 @@ export const Chat = () => {
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
-
-            {customerConversation.isTyping && (
-              <div className="flex items-end gap-2">
-                <Avatar size="sm" className="bg-primary/10 text-primary">
-                  <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
-                    {customerConversation.admin.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex items-center gap-1 rounded-lg rounded-bl-sm border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <span className="size-1.5 rounded-full bg-slate-400" />
-                  <span className="size-1.5 rounded-full bg-slate-400" />
-                  <span className="size-1.5 rounded-full bg-slate-400" />
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -129,7 +190,7 @@ export const Chat = () => {
             <Button
               size="icon-lg"
               onClick={() => void handleSendMessage()}
-              disabled={!messageText.trim()}
+              disabled={!messageText.trim() || !isConnected}
               className="shrink-0 rounded-lg"
             >
               <Send />

@@ -1,9 +1,11 @@
+using API.Hubs;
 using Infrastructure;
 using Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddInfrastructureAuthentication(builder.Configuration);
 
@@ -38,5 +40,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();
