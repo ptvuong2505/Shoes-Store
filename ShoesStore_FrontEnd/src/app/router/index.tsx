@@ -20,6 +20,7 @@ import CartPage from "@/features/cart/pages/CartPage";
 import AdminLayout from "@/features/admin/layouts/AdminLayout";
 import AdminDashboardPage from "@/features/admin/pages/AdminDashboardPage";
 import AdminProductsPage from "@/features/admin/pages/AdminProductsPage";
+import { AdminOrderPage } from "@/features/admin/pages/AdminOrderPage";
 
 export const router = createBrowserRouter([
   {
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminDashboardPage /> },
       { path: "products", element: <AdminProductsPage /> },
+      { path: "orders", element: <AdminOrderPage /> },
     ],
   },
 ]);
