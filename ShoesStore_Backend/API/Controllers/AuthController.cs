@@ -1,16 +1,7 @@
 ﻿using Application.DTOs.Auth;
-using Application.Features.Auth;
-using Application.Interface;
-using Domain.Entities;
-using Domain.Identity;
-using Infrastructure.Persistence;
-using Infrastructure.Service;
-using MediatR;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
@@ -18,20 +9,12 @@ namespace API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private IMediator _mediator;
         private readonly IAuthService _authService;
-        private AppDbContext _context;
-        private UserManager<ApplicationUser> _userManager;
-        private IJwtTokenService _jwtTokenService;
         private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, IMediator mediator, AppDbContext context, UserManager<ApplicationUser> userManager, IJwtTokenService jwtTokenService, IConfiguration configuration)
+        public AuthController(IAuthService authService, IConfiguration configuration)
         {
             _authService = authService;
-            _mediator = mediator;
-            _context = context;
-            _userManager = userManager;
-            _jwtTokenService = jwtTokenService;
             _configuration = configuration;
         }
 
@@ -52,7 +35,7 @@ namespace API.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { Message = ex.Message });
+                return Unauthorized(new { ex.Message });
             }
         }
 
@@ -62,7 +45,7 @@ namespace API.Controllers
         {
             try
             {
-                var result = await _mediator.Send(new RegisterCommand(registerRequestDto.UserName, registerRequestDto.Email, registerRequestDto.Phone, registerRequestDto.Password, registerRequestDto.ConfirmPassword));
+                var result = await _authService.RegisterAsync(registerRequestDto.UserName, registerRequestDto.Email, registerRequestDto.Phone, registerRequestDto.Password, registerRequestDto.ConfirmPassword);
                 return Ok(new
                 {
                     userId = result.UserId,
@@ -84,39 +67,19 @@ namespace API.Controllers
                 return Unauthorized(new { Message = "Refresh token is missing." });
             }
 
-            var oldRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == token);
-            if (oldRefreshToken == null || oldRefreshToken.IsRevoked || oldRefreshToken.ExpiresAt <= DateTime.UtcNow)
+            try
             {
-                return Unauthorized(new { Message = "Invalid or expired refresh token." });
+                var refreshResult = await _authService.RefreshTokenAsync(token);
+                Response.Cookies.Append("refreshToken", refreshResult.RefreshToken, BuildRefreshCookieOptions(refreshResult.RefreshTokenExpiresAt));
+                return Ok(new
+                {
+                    accessToken = refreshResult.AccessToken,
+                });
             }
-            oldRefreshToken.IsRevoked = true;
-
-            var user = await _userManager.FindByIdAsync(oldRefreshToken.UserId.ToString());
-            if (user == null)
+            catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { Message = "User not found." });
+                return Unauthorized(new { ex.Message });
             }
-            var roles = await _userManager.GetRolesAsync(user);
-
-            var newRefreshToken = _jwtTokenService.CreateRefreshToken();
-
-            var newRefreshTokenEntity = new RefreshToken
-            {
-                Token = newRefreshToken!,
-                UserId = user.Id,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-            };
-
-            var accessToken = _jwtTokenService.CreateAccessToken(user, roles);
-
-            await _context.RefreshTokens.AddAsync(newRefreshTokenEntity);
-            await _context.SaveChangesAsync();
-
-            Response.Cookies.Append("refreshToken", newRefreshToken!, BuildRefreshCookieOptions(DateTimeOffset.UtcNow.AddDays(7)));
-            return Ok(new
-            {
-                accessToken = accessToken,
-            });
         }
 
         [HttpPost("logout")]
@@ -124,7 +87,7 @@ namespace API.Controllers
         {
             if (Request.Cookies.TryGetValue("refreshToken", out var token) && !string.IsNullOrEmpty(token))
             {
-                await _jwtTokenService.RevokeRefreshTokenAsync(token);
+                await _authService.LogoutAsync(token);
                 Response.Cookies.Delete("refreshToken");
             }
             Console.WriteLine("User logged out successfully.");
@@ -136,7 +99,7 @@ namespace API.Controllers
         {
             try
             {
-                await _mediator.Send(new SendOtpCommand(sendOtpRequestDto.Email));
+                await _authService.SendOtpAsync(sendOtpRequestDto.Email);
                 return Ok();
             }
             catch (InvalidOperationException ex)
@@ -150,8 +113,22 @@ namespace API.Controllers
         {
             try
             {
-                await _mediator.Send(new VerifyOtpCommand(verifyOtpRequestDto.Email, verifyOtpRequestDto.Otp));
+                await _authService.VerifyOtpAsync(verifyOtpRequestDto.Email, verifyOtpRequestDto.Otp);
                 return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordRequestDto request)
+        {
+            try
+            {
+                await _authService.ResetPasswordAsync(request.Email, request.NewPassword, request.ConfirmPassword);
+                return Ok(new { Message = "Password reset successfully." });
             }
             catch (InvalidOperationException ex)
             {
@@ -184,17 +161,5 @@ namespace API.Controllers
                 Expires = expiresAt
             };
         }
-
-        //[HttpPost("reset-password")]
-        //public async Task<IActionResult> ResetPasswordAsync([FromBody] )
-        //{
-        //    try
-        //    {
-
-        //    } catch (InvalidOperationException ex)
-        //    {
-        //        return BadRequest(new { Message = ex.Message });
-        //    }
-        //}
     }
 }

@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Auth
 {
-    public class ResetPasswordRequestDto();
+    public record ResetPasswordRequestDto(string Email, string NewPassword, string ConfirmPassword);
 }

@@ -13,7 +13,7 @@ namespace Domain.Entities
         public Guid FromUserId { get; set; }
         public Guid ToUserId { get; set; }
 
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
         public bool IsRead { get; set; }
 
         public DateTime SentAt { get; set; }

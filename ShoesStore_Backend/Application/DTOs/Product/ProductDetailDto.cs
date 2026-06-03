@@ -8,10 +8,10 @@ namespace Application.DTOs.Product
 {
     public class ProductDetailDto : ProductDto
     {
-        public List<string> ImageUrls { get; set; }
-        public List<ProductSizeDto> Sizes { get; set; }
-        public List<int> Ratings { get; set; } = new List<int> { 0, 0, 0, 0, 0 }; // 5-1
-        public List<ReviewDto> Reviews { get; set; } = new List<ReviewDto>();
+        public List<string> ImageUrls { get; set; } = [];
+        public List<ProductSizeDto> Sizes { get; set; } = [];
+        public List<int> Ratings { get; set; } = new List<int> { 0, 0, 0, 0, 0 };
+        public List<ReviewDto> Reviews { get; set; } = [];
     }
 
     public class ProductSizeDto

@@ -15,14 +15,13 @@ namespace Domain.Entities
         public Guid AddressId { get; set; }
 
         public DateTime CreatedAt { get; set; }
-        public string Status { get; set; }
-        // Chờ xác nhận / Chuẩn bị / Đang giao / Thành công / Huỷ
+        public string Status { get; set; } = string.Empty;
 
         public decimal TotalAmount { get; set; }
 
-        public ApplicationUser User { get; set; }
-        public Address Address { get; set; }
-        public ICollection<OrderItem> Items { get; set; }
+        public ApplicationUser User { get; set; } = null!;
+        public Address Address { get; set; } = null!;
+        public ICollection<OrderItem> Items { get; set; } = [];
         public Payment? Payment { get; set; }
     }
 

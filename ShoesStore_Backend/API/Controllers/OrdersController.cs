@@ -1,5 +1,5 @@
 ﻿using Application.DTOs.Order;
-using Application.Interface;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +19,7 @@ namespace API.Controllers
             _orderService = orderService;
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpGet("admin/dashboard")]
         public async Task<IActionResult> GetAdminDashboard()
         {
@@ -27,6 +27,7 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetMyOrders(
                 [FromQuery] int page = 1,

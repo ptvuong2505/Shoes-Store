@@ -1,14 +1,11 @@
 version: "3.8"
 
 services:
-  frontend:
-    image: ${DOCKER_USERNAME}/my-react-app:latest
-    ports:
-      - "80:80"
-    restart: always
-
-  backend:
-    image: ${DOCKER_USERNAME}/my-dotnet-api:latest
+  api:
+    build:
+      context: ./ShoesStore_Backend
+      dockerfile: Dockerfile
+    container_name: api
     environment:
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION}
       - Jwt__Issuer=${JWT_ISSUER}
@@ -25,5 +22,29 @@ services:
       - Supabase__Url=${SUPABASE_URL}
       - Supabase__Service_Role_Key=${SUPABASE_SERVICE_ROLE_KEY}
     ports:
-      - "8080:8080"
-    restart: always
+      - "5000:8080"
+
+  frontend:
+    build:
+      context: ./ShoesStore_FrontEnd
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+  db:
+    image: postgres:16
+    container_name: shoesstore-db
+    environment:
+      - POSTGRES_DB=ShoesStoreDb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+    ports:
+      - "5432:5432"
+    volumes:
+      - shoesstore_pgdata:/var/lib/postgresql/data
+
+volumes:
+  shoesstore_pgdata:

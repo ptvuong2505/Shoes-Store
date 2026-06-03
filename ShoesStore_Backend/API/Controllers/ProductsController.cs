@@ -1,6 +1,5 @@
-﻿using Application.Interface;
-using Domain.Entities;
-using Microsoft.AspNetCore.Http;
+﻿using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Application.DTOs.Product;
@@ -30,6 +29,7 @@ namespace API.Controllers
             return Ok(products);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("admin")]
         public async Task<IActionResult> GetAdminProducts([FromQuery] AdminProductFilter filter)
         {
@@ -37,6 +37,7 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("admin")]
         public async Task<IActionResult> CreateAdminProduct([FromBody] AdminUpsertProductRequest request)
         {
@@ -44,6 +45,7 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("admin/{id}")]
         public async Task<IActionResult> UpdateAdminProduct(string id, [FromBody] AdminUpsertProductRequest request)
         {
@@ -56,6 +58,7 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("admin/{id}")]
         public async Task<IActionResult> DeleteAdminProduct(string id)
         {
