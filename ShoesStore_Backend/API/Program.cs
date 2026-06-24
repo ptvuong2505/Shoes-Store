@@ -1,45 +1,16 @@
-using API.Hubs;
+using API.Extensions;
 using Infrastructure;
-using Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddSignalR();
-builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddInfrastructureAuthentication(builder.Configuration);
-
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-    ?? builder.Configuration["Cors:AllowedOrigins"]?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-    ?? ["http://localhost:5173"];
-
-// CORS
-builder.Services.AddCors(otp =>
-{
-    otp.AddPolicy("cors", p =>
-    {
-        p.WithOrigins(allowedOrigins)
-         .AllowAnyHeader()
-         .AllowAnyMethod()
-         .AllowCredentials();
-    });
-});
+builder.Services
+    .AddApiServices(builder.Configuration)
+    .AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-await IdentitySeed.SeedAsync(app.Services);
+await app.Services.InitialiseInfrastructureAsync();
 
-app.UseCors("cors");
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.MapHub<ChatHub>("/hubs/chat");
+app.UseApiPipeline();
 
 app.Run();

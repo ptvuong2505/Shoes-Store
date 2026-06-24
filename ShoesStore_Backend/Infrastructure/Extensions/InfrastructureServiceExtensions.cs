@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Infrastructure
 {
-    public static class DependencyInjection
+    public static class InfrastructureServiceExtensions
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
@@ -42,10 +42,14 @@ namespace Infrastructure
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IChatService, ChatService>();
 
+            services.AddInfrastructureAuthentication(configuration);
+
             return services;
         }
 
-        public static IServiceCollection AddInfrastructureAuthentication(this IServiceCollection services, IConfiguration configuration)
+        private static IServiceCollection AddInfrastructureAuthentication(
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
             var jwtSecretKey = configuration["Jwt:SecretKey"];
             if (string.IsNullOrWhiteSpace(jwtSecretKey))
@@ -92,5 +96,6 @@ namespace Infrastructure
 
             return services;
         }
+
     }
 }
