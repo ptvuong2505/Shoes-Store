@@ -1,3 +1,6 @@
+using Application.Common.Errors;
+using Application.Common.Exceptions;
+using Application.Common.Responses;
 using Application.DTOs.Cart;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -21,54 +24,33 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest request)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                return Unauthorized();
-            }
+            var userId = GetCurrentUserId();
 
-            if (request == null || string.IsNullOrWhiteSpace(request.ProductId))
-            {
-                return BadRequest(new { Message = "productId is required." });
-            }
+            await _cartService.AddToCartAsync(userId, request);
 
-            if (request.Quantity <= 0)
-            {
-                return BadRequest(new { Message = "quantity must be greater than 0." });
-            }
-
-            if (request.Size <= 0)
-            {
-                return BadRequest(new { Message = "size must be greater than 0." });
-            }
-
-            try
-            {
-                await _cartService.AddToCartAsync(userId, request);
-                return Ok(new { Message = "Added to cart successfully." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { Message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
+            return Ok(ApiResponse<object?>.Ok(
+                null,
+                "Added to cart successfully."));
         }
 
         [HttpGet]
         public async Task<IActionResult> GetMyCart()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                return Unauthorized();
-            }
+            var userId = GetCurrentUserId();
 
             var items = await _cartService.GetAll(userId);
 
-            return Ok(items);
+            return Ok(ApiResponse<List<CartItemDto>>.Ok(
+                items,
+                "Cart retrieved successfully."));
+        }
+
+        private string GetCurrentUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(
+                    ErrorCodes.Unauthorized,
+                    "User ID claim not found.");
         }
     }
 }

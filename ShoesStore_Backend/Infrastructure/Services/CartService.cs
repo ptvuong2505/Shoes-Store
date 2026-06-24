@@ -1,4 +1,6 @@
-﻿using Application.DTOs.Cart;
+﻿using Application.Common.Errors;
+using Application.Common.Exceptions;
+using Application.DTOs.Cart;
 using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Persistence;
@@ -23,26 +25,54 @@ namespace Infrastructure.Services
         {
             if (!Guid.TryParse(userId, out var parsedUserId))
             {
-                throw new UnauthorizedAccessException();
+                throw new UnauthorizedException(
+                    ErrorCodes.Unauthorized,
+                    "Unauthorized.");
             }
 
             if (!Guid.TryParse(request.ProductId, out var parsedProductId))
             {
-                throw new InvalidOperationException("Invalid productId format.");
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["productId"] = ["Invalid productId format."]
+                    });
+            }
+
+            if (request.Quantity <= 0)
+            {
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["quantity"] = ["Quantity must be greater than 0."]
+                    });
+            }
+
+            if (request.Size <= 0)
+            {
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["size"] = ["Size must be greater than 0."]
+                    });
             }
 
             var product = await _context.Products
                 .FirstOrDefaultAsync(p => p.Id == parsedProductId);
             if (product == null)
             {
-                throw new KeyNotFoundException("Product not found.");
+                throw new NotFoundException(
+                    ErrorCodes.ProductNotFound,
+                    "Product not found.");
             }
 
             var size = await _context.Sizes
                 .FirstOrDefaultAsync(s => s.Value == request.Size);
             if (size == null)
             {
-                throw new InvalidOperationException("Size not found.");
+                throw new NotFoundException(
+                    ErrorCodes.SizeNotFound,
+                    "Size not found.");
             }
 
             var inventory = await _context.ProductInventories
@@ -50,7 +80,9 @@ namespace Infrastructure.Services
 
             if (inventory == null)
             {
-                throw new InvalidOperationException("Product inventory not found for selected size.");
+                throw new NotFoundException(
+                    ErrorCodes.InventoryNotFound,
+                    "Product inventory not found for selected size.");
             }
 
             var existingItem = await _context.CartItems
@@ -62,7 +94,9 @@ namespace Infrastructure.Services
             var nextQuantity = (existingItem?.Quantity ?? 0) + request.Quantity;
             if (inventory.Quantity < nextQuantity)
             {
-                throw new InvalidOperationException("Not enough inventory.");
+                throw new ConflictException(
+                    ErrorCodes.InsufficientInventory,
+                    "Not enough inventory.");
             }
 
             if (existingItem == null)
@@ -89,9 +123,20 @@ namespace Infrastructure.Services
 
         public async Task<List<CartItemDto>> GetAll(string userId)
         {
-            var user = await _context.Users.FindAsync(Guid.Parse(userId));
+            if (!Guid.TryParse(userId, out var parsedUserId))
+            {
+                throw new UnauthorizedException(
+                    ErrorCodes.Unauthorized,
+                    "Unauthorized.");
+            }
+
+            var user = await _context.Users.FindAsync(parsedUserId);
             if (user == null)
-                throw new Exception("User not found");
+            {
+                throw new NotFoundException(
+                    ErrorCodes.UserNotFound,
+                    "User not found.");
+            }
 
             var cartItems = await _context.CartItems
                 .Where(ci => ci.UserId.ToString() == userId)
