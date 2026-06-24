@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs.Account;
 using Application.DTOs.Auth;
+using Application.Common.Errors;
+using Application.Common.Exceptions;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Identity;
@@ -40,7 +42,9 @@ namespace Infrastructure.Services
             var user = await _userManager.FindByEmailAsync(email);
             if(user == null)
             {
-                throw new InvalidOperationException("Email not found.");
+                throw new NotFoundException(
+                    ErrorCodes.EmailNotFound,
+                    "Email not found.");
             }
             var otp = new Random().Next(100000, 999999).ToString();
             var pwOtp = new PasswordResetOtp
@@ -73,19 +77,25 @@ namespace Infrastructure.Services
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
-                throw new UnauthorizedAccessException("Invalid email");
+                throw new UnauthorizedException(
+                    ErrorCodes.InvalidCredentials,
+                    "Email or password is incorrect.");
             }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
 
             if (result.IsLockedOut)
             {
-                throw new UnauthorizedAccessException("User account is locked out.");
+                throw new UnauthorizedException(
+                    ErrorCodes.AccountLocked,
+                    "User account is locked out.");
             }
 
             if (!result.Succeeded)
             {
-                throw new UnauthorizedAccessException("Invalid password");
+                throw new UnauthorizedException(
+                    ErrorCodes.InvalidCredentials,
+                    "Email or password is incorrect.");
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -122,12 +132,21 @@ namespace Infrastructure.Services
             var user = await _userManager.FindByEmailAsync(email);
             if(user != null)
             {
-                throw new InvalidOperationException("Email is already registered.");
+                throw new ConflictException(
+                    ErrorCodes.EmailAlreadyRegistered,
+                    "Email is already registered.");
             }
 
             if(password != confirmPassword)
             {
-                throw new InvalidOperationException("Password and confirm password do not match.");
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["confirmPassword"] =
+                        [
+                            "Password and confirm password do not match."
+                        ]
+                    });
             }
 
             var newUser = new ApplicationUser
@@ -142,8 +161,14 @@ namespace Infrastructure.Services
 
             if (!result.Succeeded)
             {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                throw new InvalidOperationException($"User registration failed:\n {errors}");
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["registration"] = result.Errors
+                            .Select(error => error.Description)
+                            .ToArray()
+                    },
+                    "User registration failed.");
             }
 
             if(await _roleManager.RoleExistsAsync("User"))
@@ -164,19 +189,33 @@ namespace Infrastructure.Services
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
-                throw new InvalidOperationException("Email not found.");
+                throw new NotFoundException(
+                    ErrorCodes.EmailNotFound,
+                    "Email not found.");
             }
             var pwOtp = await _context.PasswordResetOtps.Where(o => o.UserId == user.Id && o.ExpiresAt > DateTime.UtcNow)
                 .OrderByDescending(o => o.ExpiresAt)
                 .FirstOrDefaultAsync();
             if (pwOtp == null)
-                throw new InvalidOperationException("No valid OTP found or OTP is Expired.");
+            {
+                throw new BusinessRuleException(
+                    ErrorCodes.OtpExpired,
+                    "No valid OTP found or OTP has expired.");
+            }
 
             if(pwOtp.IsUsed)
-                throw new InvalidOperationException("OTP has already been used.");
+            {
+                throw new BusinessRuleException(
+                    ErrorCodes.OtpAlreadyUsed,
+                    "OTP has already been used.");
+            }
 
             if (pwOtp.OtpHash != HashOtp(otp))
-                throw new InvalidOperationException("Invalid OTP.");
+            {
+                throw new BusinessRuleException(
+                    ErrorCodes.InvalidOtp,
+                    "Invalid OTP.");
+            }
             pwOtp.IsUsed = true;
             await _context.SaveChangesAsync();
         }
@@ -185,13 +224,22 @@ namespace Infrastructure.Services
         {
             if (newPassword != confirmPassword)
             {
-                throw new InvalidOperationException("Password and confirm password do not match.");
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["confirmPassword"] =
+                        [
+                            "Password and confirm password do not match."
+                        ]
+                    });
             }
 
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
-                throw new InvalidOperationException("Email not found.");
+                throw new NotFoundException(
+                    ErrorCodes.EmailNotFound,
+                    "Email not found.");
             }
 
             var resetOtp = await _context.PasswordResetOtps
@@ -201,7 +249,9 @@ namespace Infrastructure.Services
 
             if (resetOtp == null)
             {
-                throw new InvalidOperationException("OTP verification is required before resetting password.");
+                throw new BusinessRuleException(
+                    ErrorCodes.OtpVerificationRequired,
+                    "OTP verification is required before resetting password.");
             }
 
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -209,8 +259,14 @@ namespace Infrastructure.Services
 
             if (!resetPasswordResult.Succeeded)
             {
-                var errors = string.Join(", ", resetPasswordResult.Errors.Select(e => e.Description));
-                throw new InvalidOperationException(errors);
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["newPassword"] = resetPasswordResult.Errors
+                            .Select(error => error.Description)
+                            .ToArray()
+                    },
+                    "Password reset failed.");
             }
         }
 
@@ -219,7 +275,9 @@ namespace Infrastructure.Services
             var oldRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken);
             if (oldRefreshToken == null || oldRefreshToken.IsRevoked || oldRefreshToken.ExpiresAt <= DateTime.UtcNow)
             {
-                throw new UnauthorizedAccessException("Invalid or expired refresh token.");
+                throw new UnauthorizedException(
+                    ErrorCodes.InvalidRefreshToken,
+                    "Invalid or expired refresh token.");
             }
 
             oldRefreshToken.IsRevoked = true;
@@ -227,7 +285,9 @@ namespace Infrastructure.Services
             var user = await _userManager.FindByIdAsync(oldRefreshToken.UserId.ToString());
             if (user == null)
             {
-                throw new UnauthorizedAccessException("User not found.");
+                throw new UnauthorizedException(
+                    ErrorCodes.InvalidRefreshToken,
+                    "Invalid or expired refresh token.");
             }
 
             var roles = await _userManager.GetRolesAsync(user);

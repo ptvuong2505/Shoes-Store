@@ -10,6 +10,7 @@
 bin/
 obj/
 appsettings.*.json
+logs/
 
 
 ### React / Vite

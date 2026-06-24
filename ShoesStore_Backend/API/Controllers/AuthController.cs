@@ -1,4 +1,7 @@
-﻿using Application.DTOs.Auth;
+﻿using Application.Common.Errors;
+using Application.Common.Exceptions;
+using Application.Common.Responses;
+using Application.DTOs.Auth;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,41 +25,45 @@ namespace API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] LoginRequestDto loginRequestDto)
         {
-            try
-            {
-                var loginResult = await _authService.LoginAsync(loginRequestDto.Email, loginRequestDto.Password, loginRequestDto.IsRemember);
-                var expiresAt = loginRequestDto.IsRemember ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(2);
-                Response.Cookies.Append("refreshToken", loginResult.RefreshToken, BuildRefreshCookieOptions(expiresAt));
-                return Ok(new
-                {
-                    accessToken = loginResult.AccessToken,
-                    user = loginResult.userDto
-                });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { ex.Message });
-            }
+            var loginResult = await _authService.LoginAsync(
+                loginRequestDto.Email,
+                loginRequestDto.Password,
+                loginRequestDto.IsRemember);
+
+            var expiresAt = loginRequestDto.IsRemember
+                ? DateTimeOffset.UtcNow.AddDays(7)
+                : DateTimeOffset.UtcNow.AddHours(2);
+
+            Response.Cookies.Append(
+                "refreshToken",
+                loginResult.RefreshToken,
+                BuildRefreshCookieOptions(expiresAt));
+
+            var response = new LoginResponseDto(
+                loginResult.AccessToken,
+                loginResult.userDto);
+
+            return Ok(ApiResponse<LoginResponseDto>.Ok(
+                response,
+                "Login successful."));
         }
 
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterRequestDto registerRequestDto)
         {
-            try
-            {
-                var result = await _authService.RegisterAsync(registerRequestDto.UserName, registerRequestDto.Email, registerRequestDto.Phone, registerRequestDto.Password, registerRequestDto.ConfirmPassword);
-                return Ok(new
-                {
-                    userId = result.UserId,
-                    userName = result.UserName,
-                    email = result.Email
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
+            var result = await _authService.RegisterAsync(
+                registerRequestDto.UserName,
+                registerRequestDto.Email,
+                registerRequestDto.Phone,
+                registerRequestDto.Password,
+                registerRequestDto.ConfirmPassword);
+
+            return StatusCode(
+                StatusCodes.Status201Created,
+                ApiResponse<RegisterResultDto>.Created(
+                    result,
+                    "Registration successful."));
         }
 
         [HttpPost("refresh-token")]
@@ -64,22 +71,23 @@ namespace API.Controllers
         {
             if (!Request.Cookies.TryGetValue("refreshToken", out var token) || string.IsNullOrEmpty(token))
             {
-                return Unauthorized(new { Message = "Refresh token is missing." });
+                throw new UnauthorizedException(
+                    ErrorCodes.RefreshTokenMissing,
+                    "Refresh token is missing.");
             }
 
-            try
-            {
-                var refreshResult = await _authService.RefreshTokenAsync(token);
-                Response.Cookies.Append("refreshToken", refreshResult.RefreshToken, BuildRefreshCookieOptions(refreshResult.RefreshTokenExpiresAt));
-                return Ok(new
-                {
-                    accessToken = refreshResult.AccessToken,
-                });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(new { ex.Message });
-            }
+            var refreshResult = await _authService.RefreshTokenAsync(token);
+
+            Response.Cookies.Append(
+                "refreshToken",
+                refreshResult.RefreshToken,
+                BuildRefreshCookieOptions(refreshResult.RefreshTokenExpiresAt));
+
+            var response = new AccessTokenResponseDto(refreshResult.AccessToken);
+
+            return Ok(ApiResponse<AccessTokenResponseDto>.Ok(
+                response,
+                "Token refreshed successfully."));
         }
 
         [HttpPost("logout")]
@@ -88,52 +96,48 @@ namespace API.Controllers
             if (Request.Cookies.TryGetValue("refreshToken", out var token) && !string.IsNullOrEmpty(token))
             {
                 await _authService.LogoutAsync(token);
-                Response.Cookies.Delete("refreshToken");
             }
-            Console.WriteLine("User logged out successfully.");
-            return NoContent();
+
+            Response.Cookies.Delete("refreshToken");
+
+            return Ok(ApiResponse<object?>.Ok(
+                null,
+                "Logout successful."));
         }
 
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtpAsync([FromBody] SendOtpRequestDto sendOtpRequestDto)
         {
-            try
-            {
-                await _authService.SendOtpAsync(sendOtpRequestDto.Email);
-                return Ok();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
+            await _authService.SendOtpAsync(sendOtpRequestDto.Email);
+
+            return Ok(ApiResponse<object?>.Ok(
+                null,
+                "OTP sent successfully."));
         }
 
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtpAsync([FromBody] VerifyOtpRequestDto verifyOtpRequestDto)
         {
-            try
-            {
-                await _authService.VerifyOtpAsync(verifyOtpRequestDto.Email, verifyOtpRequestDto.Otp);
-                return Ok();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
+            await _authService.VerifyOtpAsync(
+                verifyOtpRequestDto.Email,
+                verifyOtpRequestDto.Otp);
+
+            return Ok(ApiResponse<object?>.Ok(
+                null,
+                "OTP verified successfully."));
         }
 
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordRequestDto request)
         {
-            try
-            {
-                await _authService.ResetPasswordAsync(request.Email, request.NewPassword, request.ConfirmPassword);
-                return Ok(new { Message = "Password reset successfully." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
+            await _authService.ResetPasswordAsync(
+                request.Email,
+                request.NewPassword,
+                request.ConfirmPassword);
+
+            return Ok(ApiResponse<object?>.Ok(
+                null,
+                "Password reset successfully."));
         }
 
         private CookieOptions BuildRefreshCookieOptions(DateTimeOffset expiresAt)
