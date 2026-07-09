@@ -102,7 +102,8 @@ namespace Infrastructure.Services
             {
                 Token = refreshToken!,
                 UserId = user.Id,
-                ExpiresAt = isRemember ? DateTime.UtcNow.AddDays(7) : DateTime.UtcNow.AddHours(2),
+                ExpiresAt = GetRefreshTokenExpiry(isRemember),
+                RememberMe = isRemember
             });
 
             await _context.SaveChangesAsync();
@@ -269,8 +270,9 @@ namespace Infrastructure.Services
 
         public async Task<RefreshTokenResultDto> RefreshTokenAsync(string refreshToken)
         {
+            var now = DateTime.UtcNow;
             var oldRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken);
-            if (oldRefreshToken == null || oldRefreshToken.IsRevoked || oldRefreshToken.ExpiresAt <= DateTime.UtcNow)
+            if (oldRefreshToken == null || oldRefreshToken.IsRevoked || oldRefreshToken.ExpiresAt <= now)
             {
                 throw new UnauthorizedException(
                     ErrorCodes.InvalidRefreshToken,
@@ -289,13 +291,14 @@ namespace Infrastructure.Services
 
             var roles = await _userManager.GetRolesAsync(user);
             var newRefreshToken = _jwtTokenService.CreateRefreshToken();
-            var refreshTokenExpiresAt = DateTimeOffset.UtcNow.AddDays(7);
+            var refreshTokenExpiresAt = GetRefreshTokenExpiry(oldRefreshToken.RememberMe);
 
             await _context.RefreshTokens.AddAsync(new RefreshToken
             {
                 Token = newRefreshToken!,
                 UserId = user.Id,
-                ExpiresAt = refreshTokenExpiresAt.UtcDateTime,
+                ExpiresAt = refreshTokenExpiresAt,
+                RememberMe = oldRefreshToken.RememberMe,
             });
 
             var accessToken = _jwtTokenService.CreateAccessToken(user.Id, user.Email!, roles);
@@ -307,6 +310,15 @@ namespace Infrastructure.Services
         public async Task LogoutAsync(string refreshToken)
         {
             await _jwtTokenService.RevokeRefreshTokenAsync(refreshToken);
+        }
+
+        private static DateTime GetRefreshTokenExpiry(bool rememberMe)
+        {
+            var now = DateTime.UtcNow;
+
+            return rememberMe
+                ? now.AddDays(7)
+                : now.AddHours(2);
         }
     }
 }

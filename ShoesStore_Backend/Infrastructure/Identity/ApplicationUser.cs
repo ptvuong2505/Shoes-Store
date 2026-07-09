@@ -7,6 +7,6 @@ namespace Infrastructure.Identity
     {
         public string? FullName { get; set; }
         public string? AvatarUrl { get; set; }
-        public DateTimeOffset BirthDate { get; set; }
+        public DateOnly BirthDate { get; set; }
     }
 }

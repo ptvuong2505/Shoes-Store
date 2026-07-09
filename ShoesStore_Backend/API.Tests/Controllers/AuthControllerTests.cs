@@ -48,7 +48,7 @@ public class AuthControllerTests
         var controller = CreateController(new FakeAuthService());
 
         var exception = await Assert.ThrowsAsync<UnauthorizedException>(
-            controller.RefreshAsync);
+            controller.RefreshTokenAsync);
 
         Assert.Equal(ErrorCodes.RefreshTokenMissing, exception.ErrorCode);
     }

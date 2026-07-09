@@ -66,8 +66,9 @@ namespace API.Controllers
                     "Registration successful."));
         }
 
+        [AllowAnonymous]
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshAsync()
+        public async Task<IActionResult> RefreshTokenAsync()
         {
             if (!Request.Cookies.TryGetValue("refreshToken", out var token) || string.IsNullOrEmpty(token))
             {

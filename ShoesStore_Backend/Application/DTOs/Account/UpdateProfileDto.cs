@@ -10,7 +10,7 @@ namespace Application.DTOs.Account
     {
         public string UserName { get; set; }
         public string Phone { get; set; }
-        public DateTimeOffset? BirthDate { get; set; }
+        public DateOnly? BirthDate { get; set; }
     }
 
 }
