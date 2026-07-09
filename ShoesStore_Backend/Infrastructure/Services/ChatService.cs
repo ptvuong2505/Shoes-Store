@@ -1,7 +1,7 @@
 using Application.DTOs.Chat;
 using Application.Interfaces;
 using Domain.Entities;
-using Domain.Identity;
+using Infrastructure.Identity;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

@@ -24,9 +24,11 @@ namespace Infrastructure.Services
 
         public async Task<string> BuyNowAsync(string userId, BuyNowRequest request)
         {
-            var user = _context.Users.Include(u => u.Addresses).FirstOrDefault(u => u.Id.ToString() == userId);
+            var user = _context.Users.FirstOrDefault(u => u.Id.ToString() == userId);
             if (user == null)
                 throw new Exception("User not found");
+
+            var address = await _context.Addresses.FirstOrDefaultAsync(a => a.UserId.ToString() == userId && a.IsPrimary);
 
             var product = _context.Products.FirstOrDefault(p => p.Id.ToString() == request.ProductId);
             if (product == null)
@@ -47,7 +49,7 @@ namespace Infrastructure.Services
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
-                AddressId = user.Addresses.Where(a => a.IsPrimary).FirstOrDefault()?.Id ?? Guid.Empty,
+                AddressId = address?.Id == Guid.Empty ? Guid.Empty : address!.Id,
                 CreatedAt = DateTime.UtcNow,
                 Status = "Pending",
                 TotalAmount = product.Price * request.Quantity,
@@ -75,10 +77,11 @@ namespace Infrastructure.Services
                 throw new Exception("Checkout items are required");
 
             var user = await _context.Users
-                .Include(u => u.Addresses)
                 .FirstOrDefaultAsync(u => u.Id.ToString() == userId);
             if (user == null)
                 throw new Exception("User not found");
+
+            var address = await _context.Addresses.Where(a => a.UserId == user.Id && a.IsPrimary).FirstOrDefaultAsync();
 
             var normalizedRequests = new List<(Guid ProductId, int Size, int Quantity)>();
             foreach (var item in requests)
@@ -161,7 +164,7 @@ namespace Infrastructure.Services
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
-                AddressId = user.Addresses.FirstOrDefault(a => a.IsPrimary)?.Id ?? Guid.Empty,
+                AddressId = address != null ? address.Id : Guid.Empty,
                 CreatedAt = DateTime.UtcNow,
                 Status = "Pending",
                 TotalAmount = totalAmount,

@@ -1,7 +1,7 @@
 using Application.Common.Errors;
 using Application.Common.Exceptions;
 using Application.Interfaces;
-using Domain.Identity;
+using Infrastructure.Identity;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;

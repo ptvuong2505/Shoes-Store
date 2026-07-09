@@ -2,15 +2,10 @@
 using Application.DTOs.Address;
 using Application.Interfaces;
 using Domain.Entities;
-using Domain.Identity;
+using Infrastructure.Identity;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Services
 {

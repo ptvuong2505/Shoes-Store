@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Application.DTOs.Account;
 using Application.DTOs.Auth;
 using Application.Common.Errors;
 using Application.Common.Exceptions;
 using Application.Interfaces;
 using Domain.Entities;
-using Domain.Identity;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Infrastructure.Identity;
 
 namespace Infrastructure.Services
 {

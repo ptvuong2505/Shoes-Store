@@ -16,8 +16,10 @@ namespace Infrastructure.Migrations
         {
             var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
+            var basePath = Path.Combine(Directory.GetCurrentDirectory(), "../API");
+
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(basePath)
                 .AddJsonFile("appsettings.json", optional: false)
                 .AddJsonFile($"appsettings.{env}.json", optional: true)
                 .Build();

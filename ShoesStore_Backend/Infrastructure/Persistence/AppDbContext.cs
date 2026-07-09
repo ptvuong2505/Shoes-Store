@@ -1,14 +1,8 @@
 ﻿using Domain.Entities;
-using Domain.Identity;
+using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence
 {
@@ -55,9 +49,10 @@ namespace Infrastructure.Persistence
             {
                 e.ToTable("Addresses");
 
-                e.HasOne(x => x.User)
-                 .WithMany(u => u.Addresses)
-                 .HasForeignKey(x => x.UserId);
+                e.HasOne<ApplicationUser>()
+                 .WithMany()
+                 .HasForeignKey(x => x.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ProductInventory (PK kép)
@@ -77,7 +72,7 @@ namespace Infrastructure.Persistence
             // CartItem
             builder.Entity<CartItem>(e =>
             {
-                e.HasOne(x => x.User)
+                e.HasOne<ApplicationUser>()
                 .WithMany()
                 .HasForeignKey(x => x.UserId);
 
@@ -93,9 +88,10 @@ namespace Infrastructure.Persistence
             // Order
             builder.Entity<Order>(e =>
             {
-                e.HasOne(x => x.User)
-                .WithMany(u => u.Orders)
-                .HasForeignKey(x => x.UserId);
+                e.HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
                 e.HasOne(x => x.Address)
                 .WithMany()
@@ -126,9 +122,10 @@ namespace Infrastructure.Persistence
             // Review
             builder.Entity<Review>(e =>
             {
-                e.HasOne(x => x.User)
+                e.HasOne<ApplicationUser>()
                 .WithMany()
-                .HasForeignKey(x => x.UserId);
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
                 e.HasOne(x => x.Product)
                 .WithMany(p => p.Reviews)
@@ -144,14 +141,14 @@ namespace Infrastructure.Persistence
 
                 e.HasIndex(x => x.Token).IsUnique();
 
-                e.HasOne(x=>x.User).WithMany().HasForeignKey(x=> x.UserId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne<ApplicationUser>().WithMany().HasForeignKey(x=> x.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
             builder.Entity<PasswordResetOtp>(e =>
             {
                 e.HasKey(x => x.Id);
 
-                e.HasOne(x=>x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
 
                 e.Property(x => x.OtpHash).IsRequired().HasMaxLength(64);
 

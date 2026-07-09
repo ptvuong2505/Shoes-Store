@@ -1,5 +1,5 @@
 using Application.Interfaces;
-using Domain.Identity;
+using Infrastructure.Identity;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
