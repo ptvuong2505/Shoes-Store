@@ -19,14 +19,14 @@ namespace Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task SendOtpResetPasswordAsync(string toEmail, string firstName, string otp)
+        public async Task SendOtpResetPasswordAsync(string toEmail, string fullName,  string otp)
         {
             string htmlContent = $@"
                 <html>
                     <body style='font-family: Arial, sans-serif; background-color: #f4f6f8; margin:0; padding:20px;'>
                         <div style='max-width:600px; margin:auto; background:#fff; padding:30px; border-radius:8px;'>
 
-                            <h2 style='color:#333;'>Hello, {firstName}!</h2>
+                            <h2 style='color:#333;'>Hello, {fullName}!</h2>
 
                             <p style='font-size:16px; color:#555;'>
                                 You requested to reset your password. Please use the OTP code below to continue.

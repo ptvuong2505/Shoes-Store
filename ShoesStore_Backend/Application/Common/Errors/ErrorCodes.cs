@@ -21,6 +21,7 @@ public static class ErrorCodes
     public const string RefreshTokenMissing = "REFRESH_TOKEN_MISSING";
     public const string InvalidRefreshToken = "INVALID_REFRESH_TOKEN";
     public const string OtpNotFound = "OTP_NOT_FOUND";
+    public const string OtpStillValid = "OTP_STILL_VALID";
     public const string OtpExpired = "OTP_EXPIRED";
     public const string OtpAlreadyUsed = "OTP_ALREADY_USED";
     public const string InvalidOtp = "INVALID_OTP";

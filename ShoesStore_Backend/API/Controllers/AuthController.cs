@@ -99,7 +99,7 @@ namespace API.Controllers
                 await _authService.LogoutAsync(token);
             }
 
-            Response.Cookies.Delete("refreshToken");
+            Response.Cookies.Delete("refreshToken", BuildRefreshCookieOptions(DateTime.UtcNow));
 
             return Ok(ApiResponse<object?>.Ok(
                 null,
@@ -109,22 +109,22 @@ namespace API.Controllers
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtpAsync([FromBody] SendOtpRequestDto sendOtpRequestDto)
         {
-            await _authService.SendOtpAsync(sendOtpRequestDto.Email);
+            var result = await _authService.SendOtpAsync(sendOtpRequestDto.Email);
 
-            return Ok(ApiResponse<object?>.Ok(
-                null,
+            return Ok(ApiResponse<SendOtpResultDto>.Ok(
+                result,
                 "OTP sent successfully."));
         }
 
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtpAsync([FromBody] VerifyOtpRequestDto verifyOtpRequestDto)
         {
-            await _authService.VerifyOtpAsync(
+            var result = await _authService.VerifyOtpAsync(
                 verifyOtpRequestDto.Email,
                 verifyOtpRequestDto.Otp);
 
-            return Ok(ApiResponse<object?>.Ok(
-                null,
+            return Ok(ApiResponse<VerifyOtpResultDto>.Ok(
+                result, 
                 "OTP verified successfully."));
         }
 
@@ -133,6 +133,7 @@ namespace API.Controllers
         {
             await _authService.ResetPasswordAsync(
                 request.Email,
+                request.ResetToken,
                 request.NewPassword,
                 request.ConfirmPassword);
 

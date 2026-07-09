@@ -42,7 +42,27 @@ namespace Infrastructure.Services
                     ErrorCodes.EmailNotFound,
                     "Email not found.");
             }
-            var otp = new Random().Next(100000, 999999).ToString();
+
+            var otps = await _context.PasswordResetOtps.Where(o => o.UserId == user.Id && !o.IsUsed).OrderByDescending(o => o.ExpiresAt).ToListAsync();
+
+            if(otps.Count > 0)
+            {
+                var latestOtp = otps[0];
+                if (latestOtp != null && !latestOtp.IsUsed && latestOtp.ExpiresAt > DateTime.UtcNow)
+                {
+                    throw new ConflictException(
+                        ErrorCodes.OtpStillValid,
+                        "An OTP has already been sent. Please check your email.");
+                }
+            }
+
+            foreach (var item in otps)
+            {
+                item.IsUsed = true;
+            }
+
+            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            
             var pwOtp = new PasswordResetOtp
             {
                 UserId = user.Id,
@@ -51,13 +71,12 @@ namespace Infrastructure.Services
                 IsUsed = false
             };
             await _context.PasswordResetOtps.AddAsync(pwOtp);
+
             await _context.SaveChangesAsync();
-            await _emailService.SendOtpResetPasswordAsync(user.Email!, user.UserName!, otp);
+            await _emailService.SendOtpResetPasswordAsync(user.Email!, user.FullName!, otp);
             return new SendOtpResultDto
             (
-                Otp: otp,
-                Email: user.Email!,
-                UserName: user.UserName!
+                Email: user.Email!
             );
         }
 
@@ -182,7 +201,7 @@ namespace Infrastructure.Services
             );
         }
 
-        public async Task VerifyOtpAsync(string email, string otp)
+        public async Task<VerifyOtpResultDto> VerifyOtpAsync(string email, string otp)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
@@ -216,9 +235,11 @@ namespace Infrastructure.Services
             }
             pwOtp.IsUsed = true;
             await _context.SaveChangesAsync();
+            var resetToken =  await _userManager.GeneratePasswordResetTokenAsync(user);
+            return new VerifyOtpResultDto(resetToken);
         }
 
-        public async Task ResetPasswordAsync(string email, string newPassword, string confirmPassword)
+        public async Task ResetPasswordAsync(string email, string resetToken, string newPassword, string confirmPassword)
         {
             if (newPassword != confirmPassword)
             {
@@ -233,26 +254,10 @@ namespace Infrastructure.Services
             }
 
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                throw new NotFoundException(
-                    ErrorCodes.EmailNotFound,
-                    "Email not found.");
+            if (user == null) {
+                throw new NotFoundException(ErrorCodes.EmailNotFound, "Email NotFound");
             }
 
-            var resetOtp = await _context.PasswordResetOtps
-                .Where(o => o.UserId == user.Id && o.IsUsed)
-                .OrderByDescending(o => o.ExpiresAt)
-                .FirstOrDefaultAsync();
-
-            if (resetOtp == null)
-            {
-                throw new BusinessRuleException(
-                    ErrorCodes.OtpVerificationRequired,
-                    "OTP verification is required before resetting password.");
-            }
-
-            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
             var resetPasswordResult = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
 
             if (!resetPasswordResult.Succeeded)
