@@ -53,7 +53,7 @@ namespace API.Controllers
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterRequestDto registerRequestDto)
         {
             var result = await _authService.RegisterAsync(
-                registerRequestDto.UserName,
+                registerRequestDto.FullName,
                 registerRequestDto.Email,
                 registerRequestDto.Phone,
                 registerRequestDto.Password,

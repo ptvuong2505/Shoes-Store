@@ -123,7 +123,7 @@ namespace Infrastructure.Services
             );
         }
 
-        public async Task<RegisterResultDto> RegisterAsync(string userName, string email, string phone, string password, string confirmPassword)
+        public async Task<RegisterResultDto> RegisterAsync(string fullName, string email, string phone, string password, string confirmPassword)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if(user != null)
@@ -147,7 +147,8 @@ namespace Infrastructure.Services
 
             var newUser = new ApplicationUser
             {
-                UserName = userName,
+                FullName = fullName,
+                UserName = email,
                 Email = email,
                 PhoneNumber = phone,
                 EmailConfirmed = true
@@ -175,7 +176,7 @@ namespace Infrastructure.Services
             return new RegisterResultDto
             (
                 newUser.Id,
-                newUser.UserName!,
+                newUser.FullName!,
                 newUser.Email!
             );
         }
