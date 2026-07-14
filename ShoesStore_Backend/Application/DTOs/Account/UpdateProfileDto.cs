@@ -1,16 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Application.DTOs.Account
+﻿namespace Application.DTOs.Account
 {
-    public class UpdateProfileDto
-    {
-        public string UserName { get; set; }
-        public string Phone { get; set; }
-        public DateOnly? BirthDate { get; set; }
-    }
-
+    public record UpdateProfileDto(string UserName, string Phone, DateOnly? BirthDate);
 }

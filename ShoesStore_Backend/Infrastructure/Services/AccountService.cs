@@ -1,4 +1,6 @@
-﻿using Application.DTOs.Account;
+using Application.Common.Errors;
+using Application.Common.Exceptions;
+using Application.DTOs.Account;
 using Application.DTOs.Address;
 using Application.Interfaces;
 using Domain.Entities;
@@ -20,26 +22,101 @@ namespace Infrastructure.Services
             _userManager = userManager;
         }
 
-        public async Task<bool> ChangePassword(string userId, string currentPass, string newPass)
+        public async Task<UserDto> GetProfileAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new NotFoundException(ErrorCodes.UserNotFound, "User not found.");
 
-            if (user == null)
-                throw new Exception("User not found");
-
-            var result =  await _userManager.ChangePasswordAsync(user, currentPass, newPass);
-
-            return result.Succeeded;
+            return new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                Phone = user.PhoneNumber,
+                AvatarUrl = user.AvatarUrl,
+                Roles = (await _userManager.GetRolesAsync(user)).ToList(),
+                BirthDate = user.BirthDate
+            };
         }
 
-        public async Task CreateAddress(string userId, CreateAddressDto dto)
+        public async Task<UserDto> UpdateProfileAsync(string userId, UpdateProfileDto dto)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                throw new Exception("User not found");
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new NotFoundException(ErrorCodes.UserNotFound, "User not found.");
+
+            user.UserName = dto.UserName;
+            user.PhoneNumber = dto.Phone;
+            if (dto.BirthDate.HasValue)
+                user.BirthDate = dto.BirthDate.Value;
+
+            await _userManager.UpdateAsync(user);
+
+            return new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                Phone = user.PhoneNumber,
+                AvatarUrl = user.AvatarUrl,
+                Roles = (await _userManager.GetRolesAsync(user)).ToList(),
+                BirthDate = user.BirthDate
+            };
+        }
+
+        public async Task UpdateAvatarAsync(string userId, string avatarUrl)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new NotFoundException(ErrorCodes.UserNotFound, "User not found.");
+
+            user.AvatarUrl = avatarUrl;
+            await _userManager.UpdateAsync(user);
+        }
+
+        public async Task ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new NotFoundException(ErrorCodes.UserNotFound, "User not found.");
+
+            var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+            if (!result.Succeeded)
+            {
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["currentPassword"] = result.Errors
+                            .Select(error => error.Description)
+                            .ToArray()
+                    },
+                    "Password change failed.");
+            }
+        }
+
+        public async Task<List<AddressDto>> GetAddressesAsync(string userId)
+        {
+            var uid = Guid.Parse(userId);
+
+            return await _context.Addresses
+                .Where(a => a.UserId == uid)
+                .Select(a => new AddressDto
+                {
+                    Id = a.Id,
+                    UserId = uid,
+                    AddressLine = a.AddressLine,
+                    City = a.City,
+                    IsPrimary = a.IsPrimary,
+                    Phone = a.Phone,
+                    ReceiverName = a.ReceiverName,
+                })
+                .ToListAsync();
+        }
+
+        public async Task CreateAddressAsync(string userId, CreateAddressDto dto)
+        {
+            var uid = Guid.Parse(userId);
 
             var addresses = await _context.Addresses
-                .Where(x => x.UserId.ToString() == userId)
+                .Where(x => x.UserId == uid)
                 .ToListAsync();
 
             bool isFirstAddress = !addresses.Any();
@@ -47,9 +124,7 @@ namespace Infrastructure.Services
             if (dto.IsPrimary || isFirstAddress)
             {
                 foreach (var address in addresses)
-                {
                     address.IsPrimary = false;
-                }
             }
 
             var newAddress = new Address
@@ -60,35 +135,46 @@ namespace Infrastructure.Services
                 AddressLine = dto.AddressLine,
                 City = dto.City,
                 IsPrimary = dto.IsPrimary || isFirstAddress,
-                UserId = Guid.Parse(userId)
+                UserId = uid
             };
 
             await _context.Addresses.AddAsync(newAddress);
             await _context.SaveChangesAsync();
         }
 
-
-        public async Task DeleteAddress(string userId, string addressId)
+        public async Task SetPrimaryAddressAsync(string userId, string addressId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                throw new Exception("User not found");
+            var uid = Guid.Parse(userId);
+            var aid = Guid.Parse(addressId);
 
-            var address = await _context.Addresses.FirstOrDefaultAsync(x => x.Id.ToString() == addressId && x.UserId.ToString() == userId);
+            var addresses = await _context.Addresses
+                .Where(x => x.UserId == uid)
+                .ToListAsync();
 
-            if (address == null)
-                throw new Exception("Address not found");
+            foreach (var address in addresses)
+                address.IsPrimary = address.Id == aid;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAddressAsync(string userId, string addressId)
+        {
+            var uid = Guid.Parse(userId);
+            var aid = Guid.Parse(addressId);
+
+            var address = await _context.Addresses
+                .FirstOrDefaultAsync(x => x.Id == aid && x.UserId == uid)
+                ?? throw new NotFoundException(ErrorCodes.AddressNotFound, "Address not found.");
 
             bool wasPrimary = address.IsPrimary;
 
             _context.Addresses.Remove(address);
             await _context.SaveChangesAsync();
 
-            // Nếu xóa default → set cái đầu tiên làm default
             if (wasPrimary)
             {
                 var firstAddress = await _context.Addresses
-                    .Where(x => x.UserId.ToString() == userId)
+                    .Where(x => x.UserId == uid)
                     .FirstOrDefaultAsync();
 
                 if (firstAddress != null)
@@ -97,101 +183,6 @@ namespace Infrastructure.Services
                     await _context.SaveChangesAsync();
                 }
             }
-        }
-
-
-        public async Task<List<AddressDto>> GetAddress(string Id)
-        {
-            var user = await _userManager.FindByIdAsync(Id);
-            if (user == null)
-                throw new Exception("User not found");
-
-            var accdresses = await _context.Addresses.Where(a=> a.UserId == user.Id).Select(i=> new AddressDto
-            {
-                Id = i.Id,
-                UserId = user.Id,
-                AddressLine = i.AddressLine,
-                City = i.City,
-                IsPrimary = i.IsPrimary,
-                Phone  = i.Phone,
-                ReceiverName = i.ReceiverName,
-            }).ToListAsync();
-
-            return accdresses;
-        }
-
-        public async Task<UserDto> GetProfile(string Id)
-        {
-            var user = await _userManager.FindByIdAsync(Id);
-            if(user == null)
-            {
-                throw new Exception("User not found");
-            }
-            return new UserDto
-            {
-                Id = user.Id,
-                UserName = user.UserName,
-                Email = user.Email,
-                Phone = user.PhoneNumber,
-                AvatarUrl = user.AvatarUrl,
-                Roles = (await _userManager.GetRolesAsync(user)).ToList(),
-                BirthDate = user.BirthDate
-            };
-        }
-
-        public async Task SetPrimaryAddress(string userId, string addressId)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                throw new Exception("User not found");
-            
-            var addresses = await _context.Addresses.Where(x => x.UserId.ToString() == userId).ToListAsync();
-
-            foreach (var address in addresses)
-            {
-                address.IsPrimary = address.Id.ToString() == addressId;
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<UserDto> UpdateProfile(string Id, UpdateProfileDto updateProfileDto)
-        {
-            var user = await _userManager.FindByIdAsync(Id);
-            if (user == null)
-            {
-                throw new Exception("User not found");
-            }
-
-            user.UserName = updateProfileDto.UserName;
-            user.PhoneNumber = updateProfileDto.Phone;
-            if (updateProfileDto.BirthDate.HasValue)
-            {
-                user.BirthDate = updateProfileDto.BirthDate.Value;
-            }
-            await _userManager.UpdateAsync(user);
-            Console.WriteLine("Profile updated successfully.");
-            return new UserDto
-            {
-                Id = user.Id,
-                UserName = user.UserName,
-                Email = user.Email,
-                Phone = user.PhoneNumber,
-                AvatarUrl = user.AvatarUrl,
-                Roles = (await _userManager.GetRolesAsync(user)).ToList(),
-                BirthDate = user.BirthDate
-            };
-        }
-
-        public async Task UpdateUserAvatar(string Id, string avatarUrl)
-        {
-            var user = await _userManager.FindByIdAsync(Id);
-            if (user == null)
-            {
-                throw new Exception("User not found");
-            }
-            user.AvatarUrl = avatarUrl;
-            await _userManager.UpdateAsync(user);
         }
     }
 }

@@ -1,20 +1,22 @@
-﻿using Application.DTOs.Account;
+using Application.Common.Errors;
+using Application.Common.Exceptions;
+using Application.Common.Responses;
+using Application.DTOs.Account;
 using Application.DTOs.Address;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Supabase.Gotrue;
 using System.Security.Claims;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : Controller
+    public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
         private readonly IImageService _imageService;
+
         public AccountController(IAccountService accountService, IImageService imageService)
         {
             _accountService = accountService;
@@ -25,21 +27,11 @@ namespace API.Controllers
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdClaim == null)
-            {
-                return Unauthorized(new { Message = "User ID claim not found." });
-            }
-            try
-            {
-                var userDto = await _accountService.GetProfile(userIdClaim);
-                return Ok(userDto);
-            }
-            catch (Exception ex)
-            {
-                return NotFound(new { Message = ex.Message });
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
 
-            }
+            var userDto = await _accountService.GetProfileAsync(userId);
+            return Ok(ApiResponse<UserDto>.Ok(userDto, "Profile retrieved successfully."));
         }
 
         [Authorize]
@@ -47,131 +39,88 @@ namespace API.Controllers
         public async Task<IActionResult> UploadAvatar([FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("File is required");
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["file"] = ["File is required."]
+                    });
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return Unauthorized(new { Message = "User ID claim not found." });
-            }
-            try
-            {
-                Stream fileStream = file.OpenReadStream();
-                var avatarUrl = await _imageService.UploadAvatarAsync(fileStream);
-                
-                await _accountService.UpdateUserAvatar(userId, avatarUrl);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
 
-                return Ok(new { avatarUrl });
+            using var fileStream = file.OpenReadStream();
+            var avatarUrl = await _imageService.UploadAvatarAsync(fileStream);
+            await _accountService.UpdateAvatarAsync(userId, avatarUrl);
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error during avatar upload: {ex.Message}");
-                return BadRequest(new { Message = ex.Message });
-            }
+            return Ok(ApiResponse<object>.Ok(new { avatarUrl }, "Avatar uploaded successfully."));
         }
 
         [Authorize]
         [HttpPut("update-profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized(new { Message = "User ID claim not found." });
-            }
-            try
-            {
-                var result = await _accountService.UpdateProfile(userId, dto);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
+
+            var result = await _accountService.UpdateProfileAsync(userId, dto);
+            return Ok(ApiResponse<UserDto>.Ok(result, "Profile updated successfully."));
         }
 
         [Authorize]
         [HttpGet("addresses")]
-        public async Task<IActionResult> GetAddress()
+        public async Task<IActionResult> GetAddresses()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized(new { Message = "User ID claim not found." });
-            }
-            try
-            {
-                var addresses = await _accountService.GetAddress(userId);
-                return Ok(addresses);
-            }
-            catch (Exception ex) {
-                return BadRequest(new { Message = ex.Message });
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
+
+            var addresses = await _accountService.GetAddressesAsync(userId);
+            return Ok(ApiResponse<List<AddressDto>>.Ok(addresses, "Addresses retrieved successfully."));
         }
 
         [Authorize]
         [HttpPut("addresses/{id}/set-primary")]
         public async Task<IActionResult> SetPrimaryAddress(string id)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-                return Unauthorized();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
 
-            await _accountService.SetPrimaryAddress(userId, id);
-
-            return NoContent();
+            await _accountService.SetPrimaryAddressAsync(userId, id);
+            return Ok(ApiResponse<object?>.Ok(null, "Primary address updated successfully."));
         }
 
         [Authorize]
         [HttpDelete("addresses/{id}")]
         public async Task<IActionResult> DeleteAddress(string id)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-                return Unauthorized();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
 
-            await _accountService.DeleteAddress(userId, id);
-
-            return NoContent();
+            await _accountService.DeleteAddressAsync(userId, id);
+            return Ok(ApiResponse<object?>.Ok(null, "Address deleted successfully."));
         }
 
         [Authorize]
         [HttpPost("addresses")]
         public async Task<IActionResult> CreateAddress([FromBody] CreateAddressDto dto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-                return Unauthorized();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
 
-            await _accountService.CreateAddress(userId, dto);
-
-            return Ok(new { Message = "Address created successfully" });
+            await _accountService.CreateAddressAsync(userId, dto);
+            return StatusCode(
+                StatusCodes.Status201Created,
+                ApiResponse<object?>.Created(null, "Address created successfully."));
         }
 
         [Authorize]
         [HttpPut("change-password")]
-        public async Task<IActionResult> ChangePassword(ChangePasswordRequestDto request)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
 
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-            try
-            {
-                var result = await _accountService.ChangePassword(userId, request.CurrentPassword, request.NewPassword);
-                if (result)
-                {
-                    return Ok("Change password successfully");
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { Message = ex.Message });
-            }
-
-            return BadRequest("Error change password");
+            await _accountService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword);
+            return Ok(ApiResponse<object?>.Ok(null, "Password changed successfully."));
         }
-
     }
 }
