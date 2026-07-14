@@ -1,7 +1,7 @@
 import { accountApi } from "@/features/account/api/account.api";
-import { useAuthStore } from "@/shared/state/auth.store";
+import { useAuthStore } from "@/features/auth/model/auth.store";
 import type { UpdateProfilePayload } from "@/features/account/types/account.types";
-import type { User } from "@/features/auth/types/auth.types";
+import type { User } from "@/entities/user/model/user.types";
 import { useEffect, useRef, useState } from "react";
 
 const ProfilePage = () => {
@@ -67,7 +67,7 @@ const ProfilePage = () => {
       setAuthUser(updatedUser);
 
       // toast.success("Profile updated successfully 🎉");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       // toast.error(error?.response?.data?.message || "Update profile failed");
     } finally {

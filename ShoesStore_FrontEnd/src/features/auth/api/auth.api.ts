@@ -2,25 +2,23 @@ import type {
   LoginPayload,
   LoginResponse,
   RegisterPayload,
+  RegisterResponse,
+  ResetPasswordPayload,
+  VerifyOtpResponse,
 } from "@/features/auth/types/auth.types";
-import axiosClient from "@/shared/api/axiosClient";
-
-export interface ResetPasswordPayload {
-  email: string;
-  newPassword: string;
-  confirmPassword: string;
-}
+import axiosClient, { refreshAccessToken } from "@/shared/api/axiosClient";
 
 export const authApi = {
-  login: async (data: LoginPayload): Promise<LoginResponse> =>
-    axiosClient.post("/auth/login", data),
-  logout: async () => axiosClient.post("/auth/logout"),
-  register: async (data: RegisterPayload) =>
-    axiosClient.post("/auth/register", data),
-  sendOtp: async (email: string) =>
-    axiosClient.post("/auth/send-otp", { email }),
-  verifyOtp: async (email: string, otp: string) =>
-    axiosClient.post("/auth/verify-otp", { email, otp }),
-  resetPassword: async (payload: ResetPasswordPayload) =>
-    axiosClient.post("/auth/reset-password", payload),
+  login: (payload: LoginPayload) =>
+    axiosClient.post<LoginResponse>("/auth/login", payload),
+  logout: () => axiosClient.post<void>("/auth/logout"),
+  register: (payload: RegisterPayload) =>
+    axiosClient.post<RegisterResponse>("/auth/register", payload),
+  sendOtp: (email: string) =>
+    axiosClient.post<{ email: string }>("/auth/send-otp", { email }),
+  verifyOtp: (email: string, otp: string) =>
+    axiosClient.post<VerifyOtpResponse>("/auth/verify-otp", { email, otp }),
+  resetPassword: (payload: ResetPasswordPayload) =>
+    axiosClient.post<void>("/auth/reset-password", payload),
+  refreshSession: refreshAccessToken,
 };

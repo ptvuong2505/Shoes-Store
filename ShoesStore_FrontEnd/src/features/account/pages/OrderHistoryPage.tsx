@@ -1,7 +1,7 @@
 import { getMyOrders } from "@/features/order/api/order.api";
 import type { Order } from "@/features/order/types/order.types";
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 
 const OrderHistoryPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -81,25 +81,27 @@ const OrderHistoryPage = () => {
 
                   <div className="flex gap-2">
                     {order.status === "Pending" && (
-                      <NavLink
+                      <Link
                         className="px-4 py-2 text-sm font-bold bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2"
-                        to={`/orders/checkout/${order.id}`}
+                        to="/orders/checkout/$id"
+                        params={{ id: order.id }}
                       >
                         Checkout
                         <span className="material-symbols-outlined text-sm">
                           shopping_cart_checkout
                         </span>
-                      </NavLink>
+                      </Link>
                     )}
-                    <NavLink
+                    <Link
                       className="px-4 py-2 text-sm font-bold bg-[#fcf9f8] dark:bg-background-dark border border-[#e7d5cf] dark:border-[#3d2a23] rounded-lg hover:border-primary hover:text-primary transition-all flex items-center gap-2"
-                      to={`/orders/${order.id}`}
+                      to="/orders/$id"
+                      params={{ id: order.id }}
                     >
                       View Details
                       <span className="material-symbols-outlined text-sm">
                         arrow_forward
                       </span>
-                    </NavLink>
+                    </Link>
                   </div>
                 </div>
               </div>

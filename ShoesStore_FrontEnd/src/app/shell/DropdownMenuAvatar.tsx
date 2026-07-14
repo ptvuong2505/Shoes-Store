@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { BadgeCheckIcon, CreditCardIcon, LogOutIcon } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 
 interface DropdownMenuAvatarProps {
   urlAvatar?: string;
@@ -35,18 +35,18 @@ export function DropdownMenuAvatar({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          <NavLink to="/account">
+          <Link to="/account">
             <DropdownMenuItem>
               <BadgeCheckIcon />
               Account
             </DropdownMenuItem>
-          </NavLink>
-          <NavLink to="/account/security">
+          </Link>
+          <Link to="/account/security">
             <DropdownMenuItem>
               <CreditCardIcon />
               Security
             </DropdownMenuItem>
-          </NavLink>
+          </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logOut}>

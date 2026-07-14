@@ -1,25 +1,25 @@
-import { NavLink } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import logo from "@/shared/assets/logo.webp";
-import { useAuthStore } from "@/shared/state/auth.store";
+import { useAuthStore } from "@/features/auth/model/auth.store";
 
 const AccountHeader = () => {
   const { user } = useAuthStore();
   return (
     <header className="sticky h-20 top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e7d5cf] dark:border-[#3d2a23] px-10 bg-white dark:bg-background-dark">
-      <NavLink className="h-full flex items-center" to="/">
+      <Link className="h-full flex items-center" to="/">
         <img src={logo} className="h-full" alt="Logo" />
         <h2 className="text-foreground ml-3 font-black text-2xl w-auto">
           Shoes Store
         </h2>
-      </NavLink>
+      </Link>
       <div className="flex flex-1 justify-end gap-8">
         <div className="items-center gap-9 hidden md:flex">
-          <NavLink
+          <Link
             className="text-sm font-medium leading-normal hover:text-primary transition-colors"
             to={"/"}
           >
             Shop
-          </NavLink>
+          </Link>
           <a
             className="text-sm font-medium leading-normal hover:text-primary transition-colors"
             href="#"

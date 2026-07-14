@@ -1,5 +1,6 @@
 import { accountApi } from "@/features/account/api/account.api";
 import { useState } from "react";
+import { toApiClientError } from "@/shared/api/api-error";
 
 const Security = () => {
   const [form, setForm] = useState({
@@ -40,8 +41,8 @@ const Security = () => {
         newPassword: "",
         confirmPassword: "",
       });
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Change password failed");
+    } catch (error: unknown) {
+      alert(toApiClientError(error).message || "Change password failed");
     } finally {
       setLoading(false);
     }

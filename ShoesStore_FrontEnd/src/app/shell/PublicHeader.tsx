@@ -1,47 +1,42 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import logo from "@/shared/assets/logo.webp";
-import { GiHamburgerMenu } from "react-icons/gi";
-import { useAuthStore } from "@/shared/state/auth.store";
+import { ShoppingCart } from "lucide-react";
+import { useAuthStore } from "@/features/auth/model/auth.store";
 import { DropdownMenuAvatar } from "@/app/shell/DropdownMenuAvatar";
 import useAuth from "@/features/auth/hooks/useAuth";
 
-type Props = {
-  onOpenMenu: () => void;
-};
-
-function PublicHeader({ onOpenMenu }: Props) {
+function PublicHeader() {
   const { isAuthenticated, user } = useAuthStore();
   const { logout } = useAuth();
-  const Menu = [
+  const menuItems = [
     { label: "Home", path: "/" },
     { label: "Find", path: "/products" },
     { label: "Chat", path: "/chat" },
-  ];
-  const activeStyle = ({ isActive }: { isActive: boolean }) => {
-    return (
-      "font-semibold leading-normal hover:text-primary transition-colors p-2 " +
-      (isActive ? "text-primary dark:text-primary/50" : "")
-    );
-  };
+  ] as const;
   return (
     <>
       <header className="sticky w-full top-0 h-20 flex justify-between items-center bg-background z-50 px-4 border-b">
         <div className="h-full flex justify-around items-center w-full lg:w-1/2">
-          <NavLink className="h-full flex items-center" to="/">
+          <Link className="h-full flex items-center" to="/">
             <img src={logo} className="h-full" alt="Logo" />
             <h2 className="text-foreground ml-3 font-black text-2xl w-auto">
               Shoes Store
             </h2>
-          </NavLink>
+          </Link>
         </div>
 
         <div className="hidden md:flex justify-around items-center flex-1">
           <nav className="flex justify-between gap-4">
-            {Menu.map((item, index) => {
+            {menuItems.map((item) => {
               return (
-                <NavLink key={index} to={item.path} className={activeStyle}>
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className="p-2 font-semibold leading-normal transition-colors hover:text-primary"
+                  activeProps={{ className: "text-primary" }}
+                >
                   {item.label}
-                </NavLink>
+                </Link>
               );
             })}
           </nav>
@@ -53,23 +48,23 @@ function PublicHeader({ onOpenMenu }: Props) {
               to="/cart"
               className="flex items-center justify-center p-2 text-[#9a5f4c] dark:text-[#b08e84] hover:text-primary transition-colors"
             >
-              <span className="material-symbols-outlined">shopping_cart</span>
+              <ShoppingCart className="size-5" aria-hidden="true" />
             </Link>
             <>
               {!isAuthenticated ? (
                 <>
-                  <NavLink
+                  <Link
                     to="/auth/login"
                     className="bg-primary px-3 py-2 rounded text-white text-sm font-bold"
                   >
                     Login
-                  </NavLink>
-                  <NavLink
+                  </Link>
+                  <Link
                     to="/auth/register"
                     className="bg-primary px-3 py-2 rounded text-white text-sm font-bold"
                   >
                     Register
-                  </NavLink>
+                  </Link>
                 </>
               ) : (
                 <>
@@ -82,12 +77,6 @@ function PublicHeader({ onOpenMenu }: Props) {
             </>
           </nav>
         </div>
-        <button
-          className="border rounded p-2 m-3 md:hidden"
-          onClick={() => onOpenMenu()}
-        >
-          {<GiHamburgerMenu className="size-5" />}
-        </button>
       </header>
     </>
   );

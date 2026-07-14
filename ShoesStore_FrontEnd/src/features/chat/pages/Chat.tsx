@@ -7,7 +7,7 @@ import {
   Send,
   ShieldCheck,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import {
   chatApi,
   mapConversationDtoToChatConversation,
@@ -17,11 +17,12 @@ import type {
   ChatConversation,
   ChatMessage,
 } from "@/features/chat/types/chat.types";
-import { useAuthStore } from "@/shared/state/auth.store";
+import { useAuthStore } from "@/features/auth/model/auth.store";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/lib/utils";
+import { tokenStore } from "@/shared/api/token-store";
 
 export const Chat = () => {
   const { user, isAuthenticated } = useAuthStore();
@@ -31,7 +32,7 @@ export const Chat = () => {
   const [messageText, setMessageText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const token = localStorage.getItem("accessToken") ?? undefined;
+  const token = tokenStore.get() ?? undefined;
   const initialMessages = useMemo(
     () => conversation?.messages ?? [],
     [conversation],

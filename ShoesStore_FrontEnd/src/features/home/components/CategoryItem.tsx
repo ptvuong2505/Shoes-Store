@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 
 type Props = {
   link: string | "#";
@@ -8,8 +8,8 @@ type Props = {
 
 const CategoryItem = ({ link, urlImage, title }: Props) => {
   return (
-    <NavLink
-      to={link}
+    <Link
+      to={link === "#" ? "/products" : link}
       className="relative group aspect-4/5 overflow-hidden rounded-2xl bg-gray-100"
     >
       <img
@@ -27,7 +27,7 @@ const CategoryItem = ({ link, urlImage, title }: Props) => {
           <span className="material-symbols-outlined text-sm">north_east</span>
         </span>
       </div>
-    </NavLink>
+    </Link>
   );
 };
 

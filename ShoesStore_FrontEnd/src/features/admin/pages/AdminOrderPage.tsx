@@ -1,5 +1,3 @@
-import React from "react";
-
 export const AdminOrderPage = () => {
   return (
     <main className="flex-1 flex flex-col overflow-y-auto">

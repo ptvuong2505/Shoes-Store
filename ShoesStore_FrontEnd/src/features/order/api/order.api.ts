@@ -20,7 +20,7 @@ export const getMyOrders = async (
   });
 };
 
-export const getOrderDetail = (id: string) => {
+export const getOrderDetail = (id: string): Promise<import("@/features/order/types/order.types").OrderDetail> => {
   return axiosClient.get(`/orders/${id}`);
 };
 

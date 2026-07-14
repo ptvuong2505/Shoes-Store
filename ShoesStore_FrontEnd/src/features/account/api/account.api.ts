@@ -1,7 +1,7 @@
 import axiosClient from "@/shared/api/axiosClient";
 import type { UpdateProfilePayload } from "@/features/account/types/account.types";
 import type { Address } from "@/features/account/types/address.types";
-import type { User } from "@/features/auth/types/auth.types";
+import type { User } from "@/entities/user/model/user.types";
 
 export const accountApi = {
   getProfile: async (): Promise<User> => {

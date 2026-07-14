@@ -4,10 +4,10 @@ import { formatVndCurrency } from "@/shared/lib/currency";
 import type { Address } from "@/features/account/types/address.types";
 import type { OrderCheckout as OrderCheckoutType } from "@/features/order/types/order.types";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "@tanstack/react-router";
 
 const OrderCheckoutPage = () => {
-  const { id } = useParams();
+  const { id } = useParams({ from: "/orders/checkout/$id" });
   const navigator = useNavigate();
   const [order, setOrder] = useState<OrderCheckoutType | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -61,7 +61,11 @@ const OrderCheckoutPage = () => {
     if (!selectedAddressId) return;
     try {
       await orderApi.payment(id!, selectedAddressId);
-      navigator("/orders/" + id, { replace: true });
+      await navigator({
+        to: "/orders/$id",
+        params: { id },
+        replace: true,
+      });
     } catch (err) {
       console.error(err);
     }

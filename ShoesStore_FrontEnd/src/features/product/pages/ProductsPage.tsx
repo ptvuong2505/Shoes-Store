@@ -8,7 +8,7 @@ import type {
   ProductFilter,
 } from "@/features/product/types/product.types";
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 
 const SORT_OPTIONS = ["Price: Low to High", "Price: High to Low", "Name: A-Z"];
 
@@ -258,7 +258,11 @@ const ProductsPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.items.map((product) => {
                 return (
-                  <Link key={product.id} to={`/products/${product.id}`}>
+                  <Link
+                    key={product.id}
+                    to="/products/$id"
+                    params={{ id: String(product.id) }}
+                  >
                     <ProductCard product={product} />
                   </Link>
                 );

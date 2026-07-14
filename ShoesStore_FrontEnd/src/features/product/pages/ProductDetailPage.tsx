@@ -5,10 +5,10 @@ import ReviewItem from "@/features/product/components/ReviewItem";
 import { formatVndCurrency } from "@/shared/lib/currency";
 import type { ProductDetail } from "@/features/product/types/product.types";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "@tanstack/react-router";
 
 const ProductDetailPage = () => {
-  const { id } = useParams();
+  const { id } = useParams({ from: "/_store/products/$id" });
   const navigate = useNavigate();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [visibleReviews, setVisibleReviews] = useState(3);
@@ -22,7 +22,11 @@ const ProductDetailPage = () => {
       size: selectedSize,
       quantity,
     });
-    navigate(`/orders/checkout/${orderId}`, { replace: true });
+    await navigate({
+      to: "/orders/checkout/$id",
+      params: { id: orderId },
+      replace: true,
+    });
   };
 
   useEffect(() => {
@@ -298,7 +302,7 @@ const ProductDetailPage = () => {
                         return (
                           <span
                             key={i}
-                            className="material-symbols-outlined !text-xl"
+                            className="material-symbols-outlined text-xl!"
                             style={{ fontVariationSettings: '"FILL" 0' }}
                           >
                             star

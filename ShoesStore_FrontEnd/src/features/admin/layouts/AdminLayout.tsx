@@ -1,17 +1,13 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, Outlet } from "@tanstack/react-router";
 
 const AdminLayout = () => {
   const base =
     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors";
 
-  const activeStyle = ({ isActive }: { isActive: boolean }) =>
-    `${base} ${
-      isActive
-        ? "bg-primary/10 text-primary"
-        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-    }`;
+  const linkClass = `${base} text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800`;
+  const activeProps = { className: "bg-primary/10 text-primary" };
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-[100dvh] overflow-hidden">
       <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark/50 flex flex-col">
         <div className="p-6">
           <div className="flex items-center gap-3">
@@ -29,7 +25,7 @@ const AdminLayout = () => {
           </div>
         </div>
         <nav className="flex-1 px-4 space-y-1">
-          <NavLink className={activeStyle} end to="">
+          <Link className={linkClass} activeProps={activeProps} activeOptions={{ exact: true }} to="/admin">
             <span
               className="material-symbols-outlined"
               style={{ fontVariationSettings: '"FILL" 1' }}
@@ -37,23 +33,23 @@ const AdminLayout = () => {
               dashboard
             </span>
             <span className="text-sm font-bold">Dashboard</span>
-          </NavLink>
-          <NavLink className={activeStyle} to="products">
+          </Link>
+          <Link className={linkClass} activeProps={activeProps} to="/admin/products">
             <span className="material-symbols-outlined">inventory_2</span>
             <span className="text-sm font-medium">Products</span>
-          </NavLink>
-          <NavLink className={activeStyle} to="orders">
+          </Link>
+          <Link className={linkClass} activeProps={activeProps} to="/admin/orders">
             <span className="material-symbols-outlined">shopping_cart</span>
             <span className="text-sm font-medium">Orders</span>
-          </NavLink>
-          <NavLink className={activeStyle} to="customers">
+          </Link>
+          <Link className={linkClass} activeProps={activeProps} to="/admin/customers">
             <span className="material-symbols-outlined">people</span>
             <span className="text-sm font-medium">Customers</span>
-          </NavLink>
-          <NavLink className={activeStyle} to="chat">
+          </Link>
+          <Link className={linkClass} activeProps={activeProps} to="/admin/chat">
             <span className="material-symbols-outlined">forum</span>
             <span className="text-sm font-medium">Chat</span>
-          </NavLink>
+          </Link>
         </nav>
         <div className="p-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 px-3 py-2">

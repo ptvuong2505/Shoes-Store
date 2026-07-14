@@ -1,92 +1,97 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { useForm } from "react-hook-form";
 import { authApi } from "@/features/auth/api/auth.api";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { passwordResetSession } from "@/features/auth/model/password-reset";
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormValues,
+} from "@/features/auth/schemas/auth.schemas";
+import {
+  AuthAlert,
+  AuthFormHeader,
+  AuthSubmitButton,
+  PasswordInput,
+} from "@/features/auth/ui/AuthForm";
+import { toApiClientError } from "@/shared/api/api-error";
 
-export const ResetPasswordPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const email = location.state?.email ?? "";
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    try {
-      setLoading(true);
-      await authApi.resetPassword({
-        email,
-        newPassword,
-        confirmPassword,
-      });
-      setSuccess("Password reset successfully. Redirecting to login...");
-      setTimeout(() => {
-        navigate("/auth/login", { replace: true });
-      }, 1200);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Reset password failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
+export function ResetPasswordPage() {
+  const session = passwordResetSession.read();
+  const form = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { newPassword: "", confirmPassword: "" },
+  });
+  const mutation = useMutation({
+    mutationFn: (values: ResetPasswordFormValues) => {
+      if (!session) throw new Error("Password reset session is missing.");
+      return authApi.resetPassword({ ...session, ...values });
+    },
+    onSuccess: () => {
+      passwordResetSession.clear();
+      form.reset();
+    },
+  });
+  const error = mutation.error ? toApiClientError(mutation.error) : null;
 
   return (
-    <div className="flex items-center justify-center py-12 px-4">
-      <div className="max-w-xl w-full bg-white dark:bg-[#2c1d18] rounded-xl shadow-xl border border-[#e7d5cf] dark:border-[#3d2a23] p-8 md:p-12">
-        <div className="flex flex-col gap-2 mb-8">
-          <h2 className="text-[#1b110d] dark:text-[#fcf9f8] text-3xl font-black leading-tight tracking-[-0.033em]">
-            Reset Password
-          </h2>
-          <p className="text-[#9a5f4c] dark:text-[#b08e84] text-base font-normal">
-            Create a new password for <span className="font-bold">{email}</span>
-          </p>
-        </div>
-
-        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-              {error}
-            </div>
+    <div className="space-y-8">
+      <AuthFormHeader
+        title="Choose a new password"
+        description={`Create a secure password for ${session?.email ?? "your account"}.`}
+      />
+      {error && (
+        <AuthAlert>
+          {error.message}
+          {error.details?.newPassword && (
+            <ul className="mt-1 list-disc pl-4">
+              {error.details.newPassword.map((msg, i) => (
+                <li key={i}>{msg}</li>
+              ))}
+            </ul>
           )}
+        </AuthAlert>
+      )}
+      {mutation.isSuccess && (
+        <AuthAlert variant="success">Your password has been updated.</AuthAlert>
+      )}
 
-          {success && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
-              {success}
-            </div>
-          )}
-
-          <input
-            className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-[#1b110d] h-12 px-4"
-            type="password"
-            placeholder="New password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
+      {!mutation.isSuccess && (
+        <form
+          className="space-y-5"
+          noValidate
+          onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+        >
+          <PasswordInput
+            id="newPassword"
+            label="New password"
+            placeholder="At least 8 characters"
+            autoComplete="new-password"
+            error={form.formState.errors.newPassword?.message}
+            {...form.register("newPassword")}
           />
-
-          <input
-            className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-[#1b110d] h-12 px-4"
-            type="password"
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
+          <PasswordInput
+            id="confirmNewPassword"
+            label="Confirm new password"
+            placeholder="Enter the password again"
+            autoComplete="new-password"
+            error={form.formState.errors.confirmPassword?.message}
+            {...form.register("confirmPassword")}
           />
-
-          <button
-            className={`${loading ? "opacity-50 cursor-not-allowed" : ""} flex w-full items-center justify-center rounded-lg h-14 px-4 bg-primary text-white text-base font-bold`}
-            type="submit"
-            disabled={loading || !email}
-          >
-            {loading ? "Resetting..." : "Reset Password"}
-          </button>
+          <AuthSubmitButton loading={mutation.isPending}>
+            {mutation.isPending ? "Updating password..." : "Update password"}
+          </AuthSubmitButton>
         </form>
-      </div>
+      )}
+
+      {mutation.isSuccess && (
+        <Link
+          to="/auth/login"
+          className="flex h-12 w-full items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground"
+        >
+          Continue to sign in
+        </Link>
+      )}
     </div>
   );
-};
+}

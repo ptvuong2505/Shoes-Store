@@ -1,14 +1,10 @@
-import MobileSidebar from "@/app/shell/MobileSidebar";
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "@tanstack/react-router";
 import PublicHeader from "@/app/shell/PublicHeader";
 
 const AppLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="flex min-h-screen flex-col">
-      <PublicHeader onOpenMenu={() => setSidebarOpen(true)} />
-      <MobileSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="flex min-h-dvh flex-col">
+      <PublicHeader />
       <main className="top-20 flex-1 overflow-hidden">
         <Outlet />
       </main>

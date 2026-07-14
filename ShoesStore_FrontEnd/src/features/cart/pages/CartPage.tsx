@@ -3,7 +3,7 @@ import { orderApi } from "@/features/order/api/order.api";
 import { formatVndCurrency } from "@/shared/lib/currency";
 import type { CartItem, CartResponse } from "@/features/cart/types/cart.types";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=300&q=80";
@@ -194,7 +194,11 @@ const CartPage = () => {
         return;
       }
 
-      navigate(`/orders/checkout/${orderId}`, { replace: true });
+      await navigate({
+        to: "/orders/checkout/$id",
+        params: { id: orderId },
+        replace: true,
+      });
     } catch (err) {
       console.error(err);
       setCheckoutError("Checkout failed. Please try again.");

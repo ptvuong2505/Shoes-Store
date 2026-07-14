@@ -1,12 +1,3 @@
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/shared/ui/combobox";
-
 type Props = {
   items: string[];
   placeholder: string;
@@ -21,22 +12,20 @@ export const FilterComboBox = ({
   onValueChange,
 }: Props) => {
   return (
-    <Combobox
-      items={items}
-      value={value}
-      onValueChange={(val) => onValueChange?.(val as string)}
+    <select
+      aria-label={placeholder}
+      className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+      value={value ?? ""}
+      onChange={(event) => onValueChange?.(event.target.value)}
     >
-      <ComboboxInput placeholder={placeholder} />
-      <ComboboxContent>
-        <ComboboxEmpty>No items found.</ComboboxEmpty>
-        <ComboboxList>
-          {(item) => (
-            <ComboboxItem key={item} value={item}>
-              {item}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+      <option value="" disabled>
+        {placeholder}
+      </option>
+      {items.map((item) => (
+        <option key={item} value={item}>
+          {item}
+        </option>
+      ))}
+    </select>
   );
 };

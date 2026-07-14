@@ -1,13 +1,13 @@
 import AccountHeader from "@/features/account/components/AccountHeader";
 import useAuth from "@/features/auth/hooks/useAuth";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, Outlet } from "@tanstack/react-router";
 
 const AccountLayout = () => {
   const { logout } = useAuth();
-  const activeStyle = ({ isActive }: { isActive: boolean }) => {
-    return isActive
-      ? "flex items-center gap-3 px-6 py-4 text-sm transition-all bg-primary/10 text-primary border-r-4 border-primary font-bold"
-      : "flex items-center gap-3 px-6 py-4 text-sm transition-all";
+  const linkClass = "flex items-center gap-3 px-6 py-4 text-sm transition-all";
+  const activeProps = {
+    className:
+      "border-r-4 border-primary bg-primary/10 font-bold text-primary",
   };
   const handleLogout = () => {
     logout();
@@ -26,50 +26,40 @@ const AccountLayout = () => {
               </div>
               <ul className="flex flex-col">
                 <li>
-                  <NavLink className={activeStyle} to={"/account"} end>
+                  <Link className={linkClass} activeProps={activeProps} to="/account" activeOptions={{ exact: true }}>
                     <span className="material-symbols-outlined text-xl">
                       person
                     </span>
                     Personal Info
-                  </NavLink>
+                  </Link>
                 </li>
                 <li>
-                  <NavLink
-                    className={activeStyle}
-                    to={"/account/order-history"}
+                  <Link
+                    className={linkClass}
+                    activeProps={activeProps}
+                    to="/account/order-history"
                   >
                     <span className="material-symbols-outlined text-xl">
                       shopping_bag
                     </span>
                     Order History
-                  </NavLink>
+                  </Link>
                 </li>
                 <li>
-                  <NavLink className={activeStyle} to={"/account/addresses"}>
+                  <Link className={linkClass} activeProps={activeProps} to="/account/addresses">
                     <span className="material-symbols-outlined text-xl">
                       location_on
                     </span>
                     Addresses
-                  </NavLink>
+                  </Link>
                 </li>
                 <li>
-                  <NavLink
-                    className={activeStyle}
-                    to={"/account/payment-methods"}
-                  >
-                    <span className="material-symbols-outlined text-xl">
-                      payments
-                    </span>
-                    Payment Methods
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink className={activeStyle} to={"/account/security"}>
+                  <Link className={linkClass} activeProps={activeProps} to="/account/security">
                     <span className="material-symbols-outlined text-xl">
                       security
                     </span>
                     Security
-                  </NavLink>
+                  </Link>
                 </li>
               </ul>
               <div className="p-6 mt-4 border-t border-[#e7d5cf] dark:border-[#3d2a23]">

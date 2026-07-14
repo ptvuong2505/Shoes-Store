@@ -3,10 +3,10 @@ import { formatVndCurrency } from "@/shared/lib/currency";
 
 import type { OrderDetail, OrderItem } from "@/features/order/types/order.types";
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 
 const OrderDetailPage = () => {
-  const { id } = useParams();
+  const { id } = useParams({ from: "/orders/$id" });
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -38,12 +38,12 @@ const OrderDetailPage = () => {
       ) : (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <nav className="mb-6 flex items-center gap-2 text-sm text-slate-500">
-            <NavLink
+            <Link
               className="hover:text-primary transition-colors"
               to="/account/order-history"
             >
               Orders History
-            </NavLink>
+            </Link>
             <span className="material-symbols-outlined text-xs">
               chevron_right
             </span>
@@ -75,7 +75,10 @@ const OrderDetailPage = () => {
                 {order.status === "Pending" && (
                   <button
                     onClick={() => {
-                      navigate(`/orders/checkout/${order.id}`);
+                      void navigate({
+                        to: "/orders/checkout/$id",
+                        params: { id: order.id },
+                      });
                     }}
                     className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
                   >
