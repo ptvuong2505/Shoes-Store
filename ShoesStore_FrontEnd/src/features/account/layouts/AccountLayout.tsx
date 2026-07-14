@@ -1,4 +1,4 @@
-import AccountHeader from "@/features/account/components/AccountHeader";
+import PublicHeader from "@/app/shell/PublicHeader";
 import useAuth from "@/features/auth/hooks/useAuth";
 import { Link, Outlet } from "@tanstack/react-router";
 
@@ -9,13 +9,11 @@ const AccountLayout = () => {
     className:
       "border-r-4 border-primary bg-primary/10 font-bold text-primary",
   };
-  const handleLogout = () => {
-    logout();
-  };
+
   return (
-    <>
-      <AccountHeader />
-      <main className="top-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 mt-5">
+    <div className="flex min-h-dvh flex-col">
+      <PublicHeader />
+      <main className="top-20 flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 mt-5 w-full">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <aside className="md:col-span-1">
             <nav className="bg-white dark:bg-[#2c1d18] rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23] overflow-hidden shadow-sm">
@@ -34,11 +32,7 @@ const AccountLayout = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    className={linkClass}
-                    activeProps={activeProps}
-                    to="/account/order-history"
-                  >
+                  <Link className={linkClass} activeProps={activeProps} to="/account/order-history">
                     <span className="material-symbols-outlined text-xl">
                       shopping_bag
                     </span>
@@ -64,7 +58,7 @@ const AccountLayout = () => {
               </ul>
               <div className="p-6 mt-4 border-t border-[#e7d5cf] dark:border-[#3d2a23]">
                 <button
-                  onClick={handleLogout}
+                  onClick={logout}
                   className="flex items-center gap-3 text-sm text-red-500 font-semibold hover:opacity-80 transition-opacity"
                 >
                   <span className="material-symbols-outlined text-xl">
@@ -78,7 +72,7 @@ const AccountLayout = () => {
           <Outlet />
         </div>
       </main>
-    </>
+    </div>
   );
 };
 
