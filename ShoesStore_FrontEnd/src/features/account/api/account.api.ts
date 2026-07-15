@@ -3,6 +3,16 @@ import type { UpdateProfilePayload } from "@/features/account/types/account.type
 import type { Address } from "@/features/account/types/address.types";
 import type { User } from "@/entities/user/model/user.types";
 
+export interface UserReview {
+  id: string;
+  productId: string;
+  productName: string;
+  productImageUrl?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
 export const accountApi = {
   getProfile: async (): Promise<User> => {
     return await axiosClient.get("/account/profile");
@@ -32,5 +42,8 @@ export const accountApi = {
   },
   changePassword: (data: { currentPassword: string; newPassword: string }) => {
     return axiosClient.put("/account/change-password", data);
+  },
+  getReviews: (): Promise<UserReview[]> => {
+    return axiosClient.get("/account/reviews");
   },
 };

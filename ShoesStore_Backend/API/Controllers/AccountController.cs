@@ -122,5 +122,16 @@ namespace API.Controllers
             await _accountService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword);
             return Ok(ApiResponse<object?>.Ok(null, "Password changed successfully."));
         }
+
+        [Authorize]
+        [HttpGet("reviews")]
+        public async Task<IActionResult> GetReviews()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedException(ErrorCodes.Unauthorized, "User ID claim not found.");
+
+            var reviews = await _accountService.GetReviewsAsync(userId);
+            return Ok(ApiResponse<List<UserReviewDto>>.Ok(reviews, "Reviews retrieved successfully."));
+        }
     }
 }

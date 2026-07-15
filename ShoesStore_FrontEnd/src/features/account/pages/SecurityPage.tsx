@@ -1,210 +1,129 @@
 import { accountApi } from "@/features/account/api/account.api";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import { toApiClientError } from "@/shared/api/api-error";
+import {
+  changePasswordSchema,
+  type ChangePasswordFormValues,
+} from "@/features/account/schemas/account.schemas";
+import { Loader2 } from "lucide-react";
 
-const Security = () => {
-  const [form, setForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+function SecurityPage() {
+  const form = useForm<ChangePasswordFormValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
 
-  const [loading, setLoading] = useState(false);
+  const mutation = useMutation({
+    mutationFn: (values: ChangePasswordFormValues) =>
+      accountApi.changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      }),
+    onSuccess: () => form.reset(),
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (form.newPassword !== form.confirmPassword) {
-      alert("Confirm password does not match");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      await accountApi.changePassword({
-        currentPassword: form.currentPassword,
-        newPassword: form.newPassword,
-      });
-
-      alert("Password updated successfully");
-      setForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (error: unknown) {
-      alert(toApiClientError(error).message || "Change password failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const error = mutation.error ? toApiClientError(mutation.error) : null;
 
   return (
-    <div className="md:col-span-3 space-y-8">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-black tracking-tight">
-          Security Settings
-        </h1>
-        <p className="text-[#9a5f4c] dark:text-[#b08e84]">
-          Manage your password, two-factor authentication.
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Security Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage your password and account security.
         </p>
       </div>
-      <div className="bg-white dark:bg-[#2c1d18] rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23] shadow-sm overflow-hidden">
-        <div className="px-8 py-6 border-b border-[#e7d5cf] dark:border-[#3d2a23]">
-          <h3 className="text-lg font-bold">Change Password</h3>
-          <p className="text-sm text-[#9a5f4c] dark:text-[#b08e84]">
-            We recommend using a unique password that you don't use elsewhere.
+
+      <div className="rounded-xl border border-border/60 bg-card">
+        <div className="border-b border-border/40 px-6 py-4">
+          <h2 className="text-base font-semibold">Change Password</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Use a strong, unique password that you don&apos;t use elsewhere.
           </p>
         </div>
-        <form className="p-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-sm font-semibold">Current Password</label>
-              <input
-                className="form-input w-full md:w-1/2 rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
-                value={form.currentPassword}
-                onChange={handleChange}
-                name="currentPassword"
-                type="password"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold">New Password</label>
-              <input
-                className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
-                name="newPassword"
-                value={form.newPassword}
-                onChange={handleChange}
-                type="password"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold">
-                Confirm New Password
-              </label>
-              <input
-                className="form-input w-full rounded-lg border-[#e7d5cf] dark:border-[#3d2a23] bg-[#fcf9f8] dark:bg-background-dark h-12 px-4 focus:ring-primary focus:border-primary transition-all"
-                name="confirmPassword"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                type="password"
-              />
-            </div>
+
+        <form
+          className="p-6"
+          noValidate
+          onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+        >
+          <div className="max-w-md space-y-5">
+            <PasswordField
+              label="Current Password"
+              placeholder="Enter current password"
+              error={form.formState.errors.currentPassword?.message}
+              {...form.register("currentPassword")}
+            />
+            <PasswordField
+              label="New Password"
+              placeholder="At least 8 characters"
+              error={form.formState.errors.newPassword?.message}
+              {...form.register("newPassword")}
+            />
+            <PasswordField
+              label="Confirm New Password"
+              placeholder="Re-enter new password"
+              error={form.formState.errors.confirmPassword?.message}
+              {...form.register("confirmPassword")}
+            />
           </div>
-          <div className="flex justify-end pt-4">
+
+          {error && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
+              {error.message}
+            </div>
+          )}
+          {mutation.isSuccess && (
+            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400">
+              Password updated successfully.
+            </div>
+          )}
+
+          <div className="mt-6 flex justify-end">
             <button
-              className={`px-8 py-3 bg-primary text-white text-sm font-bold rounded-lg shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               type="submit"
-              disabled={loading}
+              disabled={mutation.isPending}
+              className="inline-flex items-center gap-2 rounded-lg bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-all duration-150 hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
             >
-              Update Password
+              {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
+              {mutation.isPending ? "Updating..." : "Update Password"}
             </button>
           </div>
         </form>
       </div>
-      {/* <div className="bg-white dark:bg-[#2c1d18] rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23] shadow-sm overflow-hidden">
-        <div className="p-8 flex items-center justify-between">
-          <div className="flex gap-4">
-            <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-2xl">
-                verified_user
-              </span>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold">
-                Two-Factor Authentication (2FA)
-              </h3>
-              <p className="text-sm text-[#9a5f4c] dark:text-[#b08e84] mt-1">
-                Add an extra layer of security to your account by requiring a
-                code from your phone.
-              </p>
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              defaultChecked=""
-              className="sr-only peer"
-              type="checkbox"
-              defaultValue=""
-            />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary" />
-          </label>
-        </div>
-      </div> */}
-      {/* <div className="bg-white dark:bg-[#2c1d18] rounded-xl border border-[#e7d5cf] dark:border-[#3d2a23] shadow-sm overflow-hidden">
-        <div className="px-8 py-6 border-b border-[#e7d5cf] dark:border-[#3d2a23] flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold">Active Sessions</h3>
-            <p className="text-sm text-[#9a5f4c] dark:text-[#b08e84]">
-              These are the devices that have logged into your account.
-            </p>
-          </div>
-          <button className="text-sm font-bold text-red-500 hover:text-red-600 transition-colors">
-            Log out from all other devices
-          </button>
-        </div>
-        <div className="p-0">
-          <div className="flex items-center justify-between px-8 py-6 border-b border-[#e7d5cf] dark:border-[#3d2a23]">
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-[#9a5f4c] dark:text-[#b08e84] text-3xl">
-                desktop_windows
-              </span>
-              <div>
-                <p className="font-bold text-sm">Chrome on Windows 11</p>
-                <p className="text-xs text-[#9a5f4c] dark:text-[#b08e84]">
-                  San Francisco, USA •{" "}
-                  <span className="text-primary font-medium">
-                    Current Session
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-between px-8 py-6 border-b border-[#e7d5cf] dark:border-[#3d2a23]">
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-[#9a5f4c] dark:text-[#b08e84] text-3xl">
-                smartphone
-              </span>
-              <div>
-                <p className="font-bold text-sm">ShoeStore App on iPhone 15</p>
-                <p className="text-xs text-[#9a5f4c] dark:text-[#b08e84]">
-                  San Francisco, USA • 2 hours ago
-                </p>
-              </div>
-            </div>
-            <button className="px-4 py-2 text-xs font-bold bg-[#fcf9f8] dark:bg-[#1b110d] border border-[#e7d5cf] dark:border-[#3d2a23] rounded-lg hover:bg-gray-100 dark:hover:bg-[#2c1d18] transition-colors">
-              Log out
-            </button>
-          </div>
-          <div className="flex items-center justify-between px-8 py-6">
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-[#9a5f4c] dark:text-[#b08e84] text-3xl">
-                tablet_mac
-              </span>
-              <div>
-                <p className="font-bold text-sm">Safari on iPad Pro</p>
-                <p className="text-xs text-[#9a5f4c] dark:text-[#b08e84]">
-                  New York, USA • Yesterday
-                </p>
-              </div>
-            </div>
-            <button className="px-4 py-2 text-xs font-bold bg-[#fcf9f8] dark:bg-[#1b110d] border border-[#e7d5cf] dark:border-[#3d2a23] rounded-lg hover:bg-gray-100 dark:hover:bg-[#2c1d18] transition-colors">
-              Log out
-            </button>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
-};
+}
 
-export default Security;
+import { forwardRef, type InputHTMLAttributes } from "react";
+
+interface PasswordFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  error?: string;
+}
+
+const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
+  ({ label, error, ...props }, ref) => (
+    <div className="space-y-1.5">
+      <label className="text-[13px] font-medium text-foreground/80">{label}</label>
+      <input
+        ref={ref}
+        type="password"
+        aria-invalid={Boolean(error)}
+        className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground/60 transition-colors duration-150 focus:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-foreground/10 aria-invalid:border-red-500 aria-invalid:focus:border-red-500 aria-invalid:focus:ring-red-500/10"
+        {...props}
+      />
+      {error && (
+        <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
+      )}
+    </div>
+  ),
+);
+PasswordField.displayName = "PasswordField";
+
+export default SecurityPage;

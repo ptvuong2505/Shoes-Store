@@ -13,6 +13,9 @@ namespace Application.DTOs.Order
         public string Status { get; set; } = string.Empty;
         public decimal TotalAmount { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
+        public string? PaymentMethod { get; set; }
+        public string? PaymentStatus { get; set; }
+        public DateTime? PaidAt { get; set; }
         public List<OrderItemDto> Items { get; set; } = [];
     }
 }

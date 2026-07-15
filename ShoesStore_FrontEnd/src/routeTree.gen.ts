@@ -28,6 +28,7 @@ import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminChatRouteImport } from './routes/admin.chat'
 import { Route as AccountSecurityRouteImport } from './routes/account.security'
+import { Route as AccountReviewsRouteImport } from './routes/account.reviews'
 import { Route as AccountOrderHistoryRouteImport } from './routes/account.order-history'
 import { Route as AccountAddressesRouteImport } from './routes/account.addresses'
 import { Route as StoreChatRouteImport } from './routes/_store.chat'
@@ -130,6 +131,11 @@ const AccountSecurityRoute = AccountSecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountReviewsRoute = AccountReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
+  getParentRoute: () => AccountRoute,
+} as any)
 const AccountOrderHistoryRoute = AccountOrderHistoryRouteImport.update({
   id: '/order-history',
   path: '/order-history',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof StoreChatRoute
   '/account/addresses': typeof AccountAddressesRoute
   '/account/order-history': typeof AccountOrderHistoryRoute
+  '/account/reviews': typeof AccountReviewsRoute
   '/account/security': typeof AccountSecurityRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/chat': typeof StoreChatRoute
   '/account/addresses': typeof AccountAddressesRoute
   '/account/order-history': typeof AccountOrderHistoryRoute
+  '/account/reviews': typeof AccountReviewsRoute
   '/account/security': typeof AccountSecurityRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/_store/chat': typeof StoreChatRoute
   '/account/addresses': typeof AccountAddressesRoute
   '/account/order-history': typeof AccountOrderHistoryRoute
+  '/account/reviews': typeof AccountReviewsRoute
   '/account/security': typeof AccountSecurityRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/account/addresses'
     | '/account/order-history'
+    | '/account/reviews'
     | '/account/security'
     | '/admin/chat'
     | '/admin/customers'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/chat'
     | '/account/addresses'
     | '/account/order-history'
+    | '/account/reviews'
     | '/account/security'
     | '/admin/chat'
     | '/admin/customers'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/_store/chat'
     | '/account/addresses'
     | '/account/order-history'
+    | '/account/reviews'
     | '/account/security'
     | '/admin/chat'
     | '/admin/customers'
@@ -473,6 +485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountSecurityRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/reviews': {
+      id: '/account/reviews'
+      path: '/reviews'
+      fullPath: '/account/reviews'
+      preLoaderRoute: typeof AccountReviewsRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/account/order-history': {
       id: '/account/order-history'
       path: '/order-history'
@@ -546,6 +565,7 @@ const StoreRouteWithChildren = StoreRoute._addFileChildren(StoreRouteChildren)
 interface AccountRouteChildren {
   AccountAddressesRoute: typeof AccountAddressesRoute
   AccountOrderHistoryRoute: typeof AccountOrderHistoryRoute
+  AccountReviewsRoute: typeof AccountReviewsRoute
   AccountSecurityRoute: typeof AccountSecurityRoute
   AccountIndexRoute: typeof AccountIndexRoute
 }
@@ -553,6 +573,7 @@ interface AccountRouteChildren {
 const AccountRouteChildren: AccountRouteChildren = {
   AccountAddressesRoute: AccountAddressesRoute,
   AccountOrderHistoryRoute: AccountOrderHistoryRoute,
+  AccountReviewsRoute: AccountReviewsRoute,
   AccountSecurityRoute: AccountSecurityRoute,
   AccountIndexRoute: AccountIndexRoute,
 }

@@ -26,6 +26,9 @@ export interface PagedOrderResponse {
 
 export interface OrderDetail extends Order {
   shippingAddress?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  paidAt?: string;
   items: OrderItem[];
 }
 

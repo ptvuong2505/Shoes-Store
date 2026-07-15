@@ -30,8 +30,10 @@ namespace Infrastructure.Services
             return new UserDto
             {
                 Id = user.Id,
+                FullName = user.FullName,
                 UserName = user.UserName,
                 Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
                 Phone = user.PhoneNumber,
                 AvatarUrl = user.AvatarUrl,
                 Roles = (await _userManager.GetRolesAsync(user)).ToList(),
@@ -44,18 +46,32 @@ namespace Infrastructure.Services
             var user = await _userManager.FindByIdAsync(userId)
                 ?? throw new NotFoundException(ErrorCodes.UserNotFound, "User not found.");
 
-            user.UserName = dto.UserName;
+            user.FullName = dto.FullName;
             user.PhoneNumber = dto.Phone;
             if (dto.BirthDate.HasValue)
                 user.BirthDate = dto.BirthDate.Value;
 
-            await _userManager.UpdateAsync(user);
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                throw new RequestValidationException(
+                    new Dictionary<string, string[]>
+                    {
+                        ["profile"] = result.Errors
+                            .Select(error => error.Description)
+                            .ToArray()
+                    },
+                    "Profile update failed.");
+            }
 
             return new UserDto
             {
                 Id = user.Id,
+                FullName = user.FullName,
                 UserName = user.UserName,
                 Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
                 Phone = user.PhoneNumber,
                 AvatarUrl = user.AvatarUrl,
                 Roles = (await _userManager.GetRolesAsync(user)).ToList(),
@@ -183,6 +199,25 @@ namespace Infrastructure.Services
                     await _context.SaveChangesAsync();
                 }
             }
+        }
+
+        public async Task<List<UserReviewDto>> GetReviewsAsync(string userId)
+        {
+            var uid = Guid.Parse(userId);
+
+            return await _context.Reviews
+                .Where(r => r.UserId == uid)
+                .OrderByDescending(r => r.CreatedAt)
+                .Select(r => new UserReviewDto(
+                    r.Id,
+                    r.ProductId,
+                    r.Product.Name,
+                    r.Product.Images.Where(img => img.IsMain).Select(img => img.ImageUrl).FirstOrDefault()
+                        ?? r.Product.Images.Select(img => img.ImageUrl).FirstOrDefault(),
+                    r.Rating,
+                    r.Comment,
+                    r.CreatedAt))
+                .ToListAsync();
         }
     }
 }

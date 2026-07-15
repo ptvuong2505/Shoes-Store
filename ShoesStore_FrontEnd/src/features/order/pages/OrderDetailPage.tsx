@@ -1,204 +1,172 @@
 import { getOrderDetail } from "@/features/order/api/order.api";
 import { formatVndCurrency } from "@/shared/lib/currency";
-
-import type { OrderDetail, OrderItem } from "@/features/order/types/order.types";
+import type { OrderItem } from "@/features/order/types/order.types";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { ChevronRight, CreditCard, Loader2, MapPin, Package } from "lucide-react";
+import type { OrderDetail } from "@/features/order/types/order.types";
 
-const OrderDetailPage = () => {
+const STATUS_STYLES: Record<string, string> = {
+  Delivered: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
+  Shipping: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
+  Pending: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+  Cancelled: "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400",
+};
+
+function OrderDetailPage() {
   const { id } = useParams({ from: "/orders/$id" });
   const [order, setOrder] = useState<OrderDetail | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (id == null) return;
-      try {
-        setLoading(true);
-        const res = await getOrderDetail(id!);
-        console.log("Order detail:", res);
-        setOrder(res);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) fetchOrder();
+    if (!id) return;
+    getOrderDetail(id)
+      .then(setOrder)
+      .finally(() => setLoading(false));
   }, [id]);
 
+  if (loading || !order) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const statusClass = STATUS_STYLES[order.status] ?? STATUS_STYLES.Pending;
+
   return (
-    <>
-      {loading || !order ? (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <p>Loading order details...</p>
-        </div>
-      ) : (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <nav className="mb-6 flex items-center gap-2 text-sm text-slate-500">
-            <Link
-              className="hover:text-primary transition-colors"
-              to="/account/order-history"
-            >
-              Orders History
-            </Link>
-            <span className="material-symbols-outlined text-xs">
-              chevron_right
-            </span>
-            <span className="text-slate-900 dark:text-slate-100 font-medium">
-              Order Details
-            </span>
-          </nav>
-          <section className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                    Order #{order?.id.slice(0, 8)}
-                  </h2>
-                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                    {order?.status}
-                  </span>
-                </div>
-                <p className="text-slate-500 dark:text-slate-400">
-                  Placed on {new Date(order?.orderDate).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex gap-3 items-center">
-                <div className=" border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                  <span className="font-black text-2xl text-primary">
-                    {formatVndCurrency(order?.totalAmount ?? 0)}
-                  </span>
-                </div>
-                {order.status === "Pending" && (
-                  <button
-                    onClick={() => {
-                      void navigate({
-                        to: "/orders/checkout/$id",
-                        params: { id: order.id },
-                      });
-                    }}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
-                  >
-                    <span className="material-symbols-outlined text-lg">
-                      payment
-                    </span>
-                    Continue Payment
-                  </button>
-                )}
-              </div>
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <nav className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link to="/account/order-history" className="hover:text-foreground transition-colors">
+          Orders
+        </Link>
+        <ChevronRight className="size-3.5" />
+        <span className="font-medium text-foreground">#{order.id.slice(0, 8).toUpperCase()}</span>
+      </nav>
+
+      {/* Order header */}
+      <div className="mb-8 rounded-xl border border-border/60 bg-card p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-bold tracking-tight">
+                Order #{order.id.slice(0, 8).toUpperCase()}
+              </h1>
+              <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${statusClass}`}>
+                {order.status}
+              </span>
             </div>
-          </section>
-
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <section className="lg:col-span-3 space-y-4">
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                  <h3 className="font-bold text-lg">Order Items</h3>
-                </div>
-                <div className="p-6 space-y-6">
-                  {order?.items.map((item: OrderItem) => (
-                    <div key={item.productId} className="flex gap-6">
-                      <div className="w-32 h-32 rounded-xl bg-slate-50 overflow-hidden">
-                        <img
-                          className="w-full h-full object-cover"
-                          src={item.imageUrl}
-                          alt={item.productName}
-                        />
-                      </div>
-
-                      <div className="flex-1 flex flex-col justify-center">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-xl">
-                            {item.productName}
-                          </h4>
-                          <span className="font-black text-lg">
-                            {formatVndCurrency(item.price)}
-                          </span>
-                        </div>
-
-                        <div className="text-sm text-slate-500 mb-4 flex gap-4">
-                          <p>Size: {item.size}</p>
-                          <p>Gender: {item.gender}</p>
-                          <p>Qty: {item.quantity}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-            <section className="lg:col-span-2 space-y-8">
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-                <div>
-                  <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-                    Shipping Address
-                  </h5>
-                  <div className="flex gap-3">
-                    <span className="material-symbols-outlined text-slate-400">
-                      location_on
-                    </span>
-                    <div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {order.shippingAddress ?? ""}
-                        <br />
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {/* <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-                  <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-                    Payment Method
-                  </h5>
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="text-sm font-bold">Visa ending in 4429</p>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Billed on Oct 24, 2023
-                      </p>
-                    </div>
-                  </div>
-                </div> */}
-              </div>
-              {/* <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">
-                Order Summary
-              </h5>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Subtotal</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    $184.00
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Shipping (Express)</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    $15.00
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Estimated Tax</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    $12.50
-                  </span>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                  <span className="font-bold text-lg">Total</span>
-                  <span className="font-black text-2xl text-primary">
-                    $211.50
-                  </span>
-                </div>
-              </div>
-            </div> */}
-            </section>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Placed on {new Date(order.orderDate).toLocaleDateString("en-US", {
+                year: "numeric", month: "long", day: "numeric",
+              })}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-bold tabular-nums">
+              {formatVndCurrency(order.totalAmount)}
+            </span>
+            {order.status === "Pending" && (
+              <button
+                onClick={() => navigate({ to: "/orders/checkout/$id", params: { id: order.id } })}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-all duration-150 hover:bg-foreground/90 active:scale-[0.98]"
+              >
+                Continue Payment
+              </button>
+            )}
           </div>
         </div>
-      )}
-    </>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Order items */}
+        <section className="space-y-4 lg:col-span-3">
+          <div className="rounded-xl border border-border/60 bg-card">
+            <div className="border-b border-border/40 px-6 py-4">
+              <h2 className="text-base font-semibold">Order Items</h2>
+            </div>
+            <div className="divide-y divide-border/40">
+              {order.items.map((item: OrderItem) => (
+                <div key={item.productId} className="flex gap-4 p-5">
+                  <div className="size-20 shrink-0 overflow-hidden rounded-lg bg-muted">
+                    <img
+                      className="size-full object-cover"
+                      src={item.imageUrl}
+                      alt={item.productName}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="truncate text-sm font-semibold">{item.productName}</h3>
+                      <span className="shrink-0 text-sm font-bold tabular-nums">
+                        {formatVndCurrency(item.price)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Size {item.size} / {item.gender} / Qty {item.quantity}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Sidebar info */}
+        <section className="space-y-4 lg:col-span-2">
+          {/* Shipping address */}
+          <div className="rounded-xl border border-border/60 bg-card p-5">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Shipping Address
+            </h3>
+            <div className="flex items-start gap-2.5">
+              <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
+              <p className="text-sm text-muted-foreground">
+                {order.shippingAddress ?? "No address"}
+              </p>
+            </div>
+          </div>
+
+          {/* Payment info */}
+          <div className="rounded-xl border border-border/60 bg-card p-5">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Payment
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <CreditCard className="size-4 shrink-0 text-muted-foreground/60" />
+                <span className="text-sm font-medium">
+                  {order.paymentMethod ?? "N/A"}
+                </span>
+              </div>
+              {order.paymentStatus && (
+                <div className="flex items-center gap-2.5">
+                  <Package className="size-4 shrink-0 text-muted-foreground/60" />
+                  <span className={`text-sm font-medium ${
+                    order.paymentStatus === "Paid"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-amber-600 dark:text-amber-400"
+                  }`}>
+                    {order.paymentStatus}
+                  </span>
+                </div>
+              )}
+              {order.paidAt && (
+                <p className="pl-6 text-xs text-muted-foreground">
+                  {new Date(order.paidAt).toLocaleDateString("en-US", {
+                    year: "numeric", month: "long", day: "numeric",
+                  })}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   );
-};
+}
 
 export default OrderDetailPage;

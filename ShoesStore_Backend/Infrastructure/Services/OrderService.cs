@@ -250,6 +250,9 @@ namespace Infrastructure.Services
                 ShippingAddress = o.Address.AddressLine,
                 Status = o.Status,
                 TotalAmount = o.TotalAmount,
+                PaymentMethod = o.Payment != null ? o.Payment.Method : null,
+                PaymentStatus = o.Payment != null ? o.Payment.Status : null,
+                PaidAt = o.Payment != null ? o.Payment.PaidAt : null,
                 Items = o.Items.Select(i => new OrderItemDto
                 {
                     ProductId = i.ProductId,

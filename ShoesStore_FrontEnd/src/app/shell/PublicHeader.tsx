@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Menu, ShoppingCart, X } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useAuthStore } from "@/features/auth/model/auth.store";
 import { UserDropdown } from "@/app/shell/UserDropdown";
 import useAuth from "@/features/auth/hooks/useAuth";
@@ -18,7 +18,7 @@ function PublicHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link to="/" className="group flex items-center gap-2.5">
@@ -40,8 +40,7 @@ function PublicHeader() {
               to={item.path}
               className="relative rounded-lg px-3.5 py-2 text-[13px] font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
               activeProps={{
-                className:
-                  "bg-accent text-foreground font-semibold",
+                className: "bg-accent text-foreground font-semibold",
               }}
               activeOptions={{ exact: item.path === "/" }}
             >
@@ -57,7 +56,7 @@ function PublicHeader() {
             to="/cart"
             className="relative rounded-lg p-2 text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
           >
-            <ShoppingCart className="size-[18px]" />
+            <ShoppingCart className="size-4.5" />
           </Link>
 
           {/* Auth desktop */}
@@ -102,7 +101,7 @@ function PublicHeader() {
       {/* Mobile menu */}
       <div
         className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${
-          mobileOpen ? "max-h-[28rem] opacity-100" : "max-h-0 opacity-0"
+          mobileOpen ? "max-h-112 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <nav className="space-y-0.5 border-t border-border/40 px-4 pb-4 pt-2">
@@ -113,8 +112,7 @@ function PublicHeader() {
               onClick={() => setMobileOpen(false)}
               className="block rounded-lg px-3 py-2.5 text-[14px] font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
               activeProps={{
-                className:
-                  "bg-accent text-foreground font-semibold",
+                className: "bg-accent text-foreground font-semibold",
               }}
               activeOptions={{ exact: item.path === "/" }}
             >
@@ -122,7 +120,7 @@ function PublicHeader() {
             </Link>
           ))}
 
-          <div className="!mt-3 border-t border-border/40 pt-3">
+          <div className="mt-3! border-t border-border/40 pt-3">
             {!isAuthenticated ? (
               <div className="flex flex-col gap-2">
                 <Link

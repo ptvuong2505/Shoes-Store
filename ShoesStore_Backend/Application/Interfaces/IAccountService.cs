@@ -13,5 +13,6 @@ namespace Application.Interfaces
         Task CreateAddressAsync(string userId, CreateAddressDto dto);
         Task SetPrimaryAddressAsync(string userId, string addressId);
         Task DeleteAddressAsync(string userId, string addressId);
+        Task<List<UserReviewDto>> GetReviewsAsync(string userId);
     }
 }
