@@ -1,8 +1,9 @@
-﻿using Application.Interfaces;
+using Application.Common.Responses;
+using Application.DTOs.Paging;
+using Application.DTOs.Product;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Application.DTOs.Product;
 
 namespace API.Controllers
 {
@@ -17,16 +18,11 @@ namespace API.Controllers
             _productService = productService;
         }
 
-        //public async Task<IActionResult> GetTrendingProductsAsync()
-        //{
-
-        //}
-
         [HttpGet]
         public async Task<IActionResult> GetAllProduct([FromQuery] ProductFilter productFilter)
         {
             var products = await _productService.GetAllProductsAsync(productFilter);
-            return Ok(products);
+            return Ok(ApiResponse<PagedResult<ProductDto>>.Ok(products, "Products retrieved successfully."));
         }
 
         [Authorize(Roles = "Admin")]
@@ -34,7 +30,7 @@ namespace API.Controllers
         public async Task<IActionResult> GetAdminProducts([FromQuery] AdminProductFilter filter)
         {
             var result = await _productService.GetAdminProductsAsync(filter);
-            return Ok(result);
+            return Ok(ApiResponse<AdminProductListDto>.Ok(result, "Admin products retrieved successfully."));
         }
 
         [Authorize(Roles = "Admin")]
@@ -42,7 +38,9 @@ namespace API.Controllers
         public async Task<IActionResult> CreateAdminProduct([FromBody] AdminUpsertProductRequest request)
         {
             var result = await _productService.CreateAdminProductAsync(request);
-            return Ok(result);
+            return StatusCode(
+                StatusCodes.Status201Created,
+                ApiResponse<AdminProductItemDto>.Created(result, "Product created successfully."));
         }
 
         [Authorize(Roles = "Admin")]
@@ -50,43 +48,29 @@ namespace API.Controllers
         public async Task<IActionResult> UpdateAdminProduct(string id, [FromBody] AdminUpsertProductRequest request)
         {
             var result = await _productService.UpdateAdminProductAsync(id, request);
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(result);
+            return Ok(ApiResponse<AdminProductItemDto>.Ok(result, "Product updated successfully."));
         }
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("admin/{id}")]
         public async Task<IActionResult> DeleteAdminProduct(string id)
         {
-            var deleted = await _productService.DeleteAdminProductAsync(id);
-            if (!deleted)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            await _productService.DeleteAdminProductAsync(id);
+            return Ok(ApiResponse<object?>.Ok(null, "Product deleted successfully."));
         }
 
         [HttpGet("filters")]
         public async Task<IActionResult> GetFiltersAsync()
         {
             var filters = await _productService.GetFiltersAsync();
-            return Ok(filters);
+            return Ok(ApiResponse<FiltersDto>.Ok(filters, "Filters retrieved successfully."));
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProductDetailByIdAsync(string id)
         {
             var productDetail = await _productService.GetProductDetailAsync(id);
-            if (productDetail == null)
-            {
-                return NotFound();
-            }
-            return Ok(productDetail);
+            return Ok(ApiResponse<ProductDetailDto>.Ok(productDetail, "Product detail retrieved successfully."));
         }
     }
 }

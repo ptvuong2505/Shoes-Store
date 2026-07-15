@@ -1,18 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Application.DTOs.Paging;
 
-namespace Application.DTOs.Paging
-{
-    public class PagedResult<T>
-    {
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int TotalItems { get; set; }
-        public int TotalPages { get; set; }
-        public List<T> Items { get; set; } = new List<T>();
-    }
-
-}
+public record PagedResult<T>(
+    int Page = 0,
+    int PageSize = 0,
+    int TotalItems = 0,
+    int TotalPages = 0,
+    List<T>? Items = null);

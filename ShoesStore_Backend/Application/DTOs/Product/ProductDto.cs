@@ -1,24 +1,15 @@
-﻿using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Application.DTOs.Product;
 
-namespace Application.DTOs.Product
+public record ProductDto
 {
-    public class ProductDto
-    {
-        public Guid Id { get; set; }
-
-        public string Name { get; set; }
-        public string Gender { get; set; } // Nam / Nữ / Unisex
-        public decimal Price { get; set; }
-        public decimal? DiscountPrice { get; set; }
-        public string Description { get; set; }
-        public string Brand { get; set; }
-        public double AverageRating { get; set; }
-        public int totalRatings { get; set; }
-        public string MainImageUrl { get; set; }
-    }
+    public Guid Id { get; init; }
+    public required string Name { get; init; }
+    public required string Gender { get; init; }
+    public decimal Price { get; init; }
+    public decimal? DiscountPrice { get; init; }
+    public required string Description { get; init; }
+    public required string Brand { get; init; }
+    public double AverageRating { get; init; }
+    public int TotalRatings { get; init; }
+    public required string MainImageUrl { get; init; }
 }
